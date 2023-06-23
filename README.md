@@ -12,7 +12,7 @@ This source can read ModBus registers via TCP (Modbus RTU over TCP). I use it al
 
 No documentation available yet, see config.example.yaml for an example that works for my PV inverter.
 
-### MQTT (planned)
+### MQTT Source (planned)
 
 This source will be able to read arbitrary metrics from MQTT topics. I also plan to integrate my SML parser from https://github.com/micw/tibber-pulse-reader so that SML encoded meter data can directly converted into metrics.
 
@@ -31,3 +31,11 @@ Sends metrics in OpenMetrics format to a HTTP endpoint (e.g. for Victoria Metric
 Supports HTTP(s) and optional basic authentication.
 
 No documentation available yet, see config.example.yaml for an example that works for my PV inverter.
+
+### MQTT Output (planned)
+
+This output will be able publish metrics via MQTT
+
+## Aggregations (planned)
+
+Aggregations will allow to reduce the amount of data. For example a "average" aggregation with a fixed window size of 5 minutes will collect all values for a metric for 5 minutes and will emit the average after that time.
