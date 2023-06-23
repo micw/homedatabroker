@@ -17,6 +17,9 @@ import org.apache.http.impl.client.HttpClients;
 import de.wyraz.homedatabroker.util.OpenmetricsBuilder;
 import jakarta.validation.constraints.NotEmpty;
 
+/**
+ * Publishes data in "OpenMetrics" format, e.g. to VictoriaMetrics (https://docs.victoriametrics.com/#how-to-import-data-in-prometheus-exposition-format)
+ */
 public class OpenMetricsPushOutput extends AbstractOutput<OpenMetricsPushOutput.OpenMetricPushOutputMetric> {
 
 	public static class OpenMetricPushOutputMetric extends AbstractOutputMetric {
