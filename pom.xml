@@ -11,7 +11,7 @@
 	</parent>
 	<properties>
 		<java.version>17</java.version>
-		<start-class>de.wyraz.tibberpulse.TibberPulseReader</start-class>
+		<start-class>de.wyraz.homedatabroker.HomeDataBroker</start-class>
 		<snakeyaml.version>2.0</snakeyaml.version>
 		<httpclient.version>4.5.14</httpclient.version>
 	</properties>
