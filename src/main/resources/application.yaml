@@ -1,0 +1,6 @@
+spring.task.scheduling.pool.size: 20
+
+logging:
+  level:
+    ROOT: warn
+    de.wyraz.homedatabroker: ${LOG_LEVEL:info}

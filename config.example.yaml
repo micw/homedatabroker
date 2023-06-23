@@ -1,0 +1,238 @@
+sources:
+  - id: pvOst
+    type: modbus-tcp
+    host: 192.168.3.201
+    port: 8899
+    cron: '*/15 * * * * *'
+    metrics:
+    - id: pvPowerIn
+      type: input
+      register: 1
+      format: uint32
+      scale: -1
+      unit: W
+    - id: pvPowerOut
+      type: input
+      register: 35
+      format: uint32
+      scale: -1
+      unit: W
+    - id: pvEnergyToday
+      type: input
+      register: 53
+      format: uint32
+      scale: -1
+      unit: kWh
+    - id: pvEnergyTotal
+      type: input
+      register: 55
+      format: uint32
+      scale: -1
+      unit: kWh
+
+    - id: pv1Voltage
+      type: input
+      register: 3
+      format: uint16
+      scale: -1
+      unit: V
+    - id: pv1Current
+      type: input
+      register: 4
+      format: uint16
+      scale: -1
+      unit: A
+    - id: pv1PowerIn
+      type: input
+      register: 5
+      format: uint32
+      scale: -1
+      unit: W
+
+    - id: pv2Voltage
+      type: input
+      register: 7
+      format: uint16
+      scale: -1
+      unit: V
+    - id: pv2Current
+      type: input
+      register: 8
+      format: uint16
+      scale: -1
+      unit: A
+    - id: pv2PowerIn
+      type: input
+      register: 9
+      format: uint32
+      scale: -1
+      unit: W
+
+    - id: inverterTemperature
+      type: input
+      register: 93
+      format: uint16
+      scale: -1
+      unit: °C
+
+      
+  - id: pvGarage
+    type: modbus-tcp
+    host: 192.168.3.202
+    port: 8899
+    cron: '*/15 * * * * *'
+    metrics:
+    - id: pvPowerIn
+      type: input
+      register: 1
+      format: uint32
+      scale: -1
+      unit: W
+    - id: pvPowerOut
+      type: input
+      register: 35
+      format: uint32
+      scale: -1
+      unit: W
+    - id: pvEnergyToday
+      type: input
+      register: 53
+      format: uint32
+      scale: -1
+      unit: kWh
+    - id: pvEnergyTotal
+      type: input
+      register: 55
+      format: uint32
+      scale: -1
+      unit: kWh
+
+    - id: pv1Voltage
+      type: input
+      register: 3
+      format: uint16
+      scale: -1
+      unit: V
+    - id: pv1Current
+      type: input
+      register: 4
+      format: uint16
+      scale: -1
+      unit: A
+    - id: pv1PowerIn
+      type: input
+      register: 5
+      format: uint32
+      scale: -1
+      unit: W
+
+    - id: pv2Voltage
+      type: input
+      register: 7
+      format: uint16
+      scale: -1
+      unit: V
+    - id: pv2Current
+      type: input
+      register: 8
+      format: uint16
+      scale: -1
+      unit: A
+    - id: pv2PowerIn
+      type: input
+      register: 9
+      format: uint32
+      scale: -1
+      unit: W
+
+    - id: temperature
+      type: input
+      register: 93
+      format: uint16
+      scale: -1
+      unit: °C
+
+      
+outputs:
+  - id: victoriametrics
+    type: openmetrics
+    
+    url: https://my-victoriametrics-server/api/v1/import/prometheus
+    username: externaluser
+    password: externalpass
+    
+    metrics:
+      - source: pvOst.pvPowerOut
+        name: power
+        labels:
+          type: solar
+          meter: pvOst
+          channel: 0
+      - source: pvOst.pv1PowerIn
+        name: power
+        labels:
+          type: solar
+          meter: pvOst
+          channel: 1
+      - source: pvOst.pv2PowerIn
+        name: power
+        labels:
+          type: solar
+          meter: pvOst
+          channel: 2
+      - source: pvOst.pvEnergyToday
+        name: yieldday
+        labels:
+          type: solar
+          meter: pvOst
+          channel: 0
+      - source: pvOst.pvEnergyTotal
+        name: yieldtotal
+        labels:
+          type: solar
+          meter: pvOst
+          channel: 0
+      - source: pvOst.temperature
+        name: temperature
+        labels:
+          type: solar
+          meter: pvOst
+          channel: 0
+
+      - source: pvGarage.pvPowerOut
+        name: power
+        labels:
+          type: solar
+          meter: pvGarage
+          channel: 0
+      - source: pvGarage.pv1PowerIn
+        name: power
+        labels:
+          type: solar
+          meter: pvGarage
+          channel: 1
+      - source: pvGarage.pv2PowerIn
+        name: power
+        labels:
+          type: solar
+          meter: pvGarage
+          channel: 2
+      - source: pvGarage.pvEnergyToday
+        name: yieldday
+        labels:
+          type: solar
+          meter: pvGarage
+          channel: 0
+      - source: pvGarage.pvEnergyTotal
+        name: yieldtotal
+        labels:
+          type: solar
+          meter: pvGarage
+          channel: 0
+      - source: pvGarage.temperature
+        name: temperature
+        labels:
+          type: solar
+          meter: pvGarage
+          channel: 0
+          
