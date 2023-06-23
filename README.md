@@ -32,6 +32,10 @@ Supports HTTP(s) and optional basic authentication.
 
 No documentation available yet, see config.example.yaml for an example that works for my PV inverter.
 
+#### Persistence (planned)
+
+When this feature is in place, OpenMetrics Http Output will be able to persist metrics if the endpoint is not available and batch-upload the outstanding metrics as soon as the endpoint is available again
+
 ### MQTT Output (planned)
 
 This output will be able publish metrics via MQTT
