@@ -40,6 +40,15 @@ When this feature is in place, OpenMetrics Http Output will be able to persist m
 
 This output will be able publish metrics via MQTT
 
+### Victron Output (planned)
+
+I am planning to install a Victron Multiplus II battery inverter in my house. After I fugured out how I cen send grid meter data to Victron, I will add this as output to HomeDataBroker.
+
 ## Aggregations (planned)
 
 Aggregations will allow to reduce the amount of data. For example a "average" aggregation with a fixed window size of 5 minutes will collect all values for a metric for 5 minutes and will emit the average after that time.
+
+
+## Web UI (planned)
+
+My idea is to expose the status of each source and output as well as all received metrics via WebUI that allows easily to check the current status. Another option would be to add a prometheus endpoint that allows monitoring of HomeDataBroker status.
