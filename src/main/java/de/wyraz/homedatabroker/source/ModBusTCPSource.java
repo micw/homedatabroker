@@ -92,7 +92,7 @@ public class ModBusTCPSource extends AbstractSource {
 
 	@Autowired
 	protected TaskScheduler scheduler;
-	
+
 	@PostConstruct
 	protected void start() {
 		scheduler.schedule(() -> { schedule(); }, new CronTrigger(cron));

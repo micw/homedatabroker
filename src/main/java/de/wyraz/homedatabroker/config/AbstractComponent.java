@@ -10,7 +10,9 @@ import jakarta.validation.constraints.NotEmpty;
 
 public abstract class AbstractComponent {
 	protected Logger log = LoggerFactory.getLogger(getClass());
-	
+
+	protected boolean enabled = true;
+
 	@NotEmpty
 	protected String id;
 

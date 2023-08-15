@@ -44,12 +44,12 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 
 	protected GenericApplicationContext ctx;
 
-	protected static Map<String, Supplier<Object>> SOURCE_TYPES = new HashMap<>();
+	protected static Map<String, Supplier<AbstractComponent>> SOURCE_TYPES = new HashMap<>();
 	static {
 		SOURCE_TYPES.put("modbus-tcp", () -> new ModBusTCPSource());
 	}
 
-	protected static Map<String, Supplier<Object>> OUTPUT_TYPES = new HashMap<>();
+	protected static Map<String, Supplier<AbstractComponent>> OUTPUT_TYPES = new HashMap<>();
 	static {
 		OUTPUT_TYPES.put("console", () -> new ConsoleOutput());
 		OUTPUT_TYPES.put("openmetrics", () -> new OpenMetricsPushOutput());
@@ -132,6 +132,15 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 		return expectScalar(mapValue(node, key, true)).getValue();
 	}
 
+	public static boolean mapBooleanValue(MappingNode node, String key, boolean defaultValue)
+			throws ConfigurationException {
+		Node value = mapValue(node, key, false);
+		if (value == null) {
+			return defaultValue;
+		}
+		return "true".equals(expectScalar(value).getValue());
+	}
+
 	@Override
 	public void initialize(GenericApplicationContext ctx) {
 		this.ctx = ctx;
@@ -169,13 +178,19 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 	}
 
 	protected void initializeBean(GenericApplicationContext ctx, Node node, String idPrefix,
-			Map<String, Supplier<Object>> typeMap) throws ConfigurationException {
+			Map<String, Supplier<AbstractComponent>> typeMap) throws ConfigurationException {
 
 		MappingNode config = expectMap(node);
+		
+		boolean enabled= mapBooleanValue(config, "enabled", true);
+		if (!enabled) {
+			return;
+		}
+
 		String type = mapStringValue(config, "type");
 		String id = mapStringValue(config, "id");
 
-		Supplier<?> supplier = typeMap.get(type);
+		Supplier<? extends AbstractComponent> supplier = typeMap.get(type);
 		if (supplier != null) {
 			registerBean(ctx, idPrefix + "." + id, () -> {
 				Object bean = supplier.get();
