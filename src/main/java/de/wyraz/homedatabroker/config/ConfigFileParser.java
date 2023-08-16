@@ -30,6 +30,7 @@ import org.yaml.snakeyaml.nodes.SequenceNode;
 
 import de.wyraz.homedatabroker.output.ConsoleOutput;
 import de.wyraz.homedatabroker.output.OpenMetricsPushOutput;
+import de.wyraz.homedatabroker.source.DummySource;
 import de.wyraz.homedatabroker.source.ModBusTCPSource;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -46,6 +47,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 
 	protected static Map<String, Supplier<AbstractComponent>> SOURCE_TYPES = new HashMap<>();
 	static {
+		SOURCE_TYPES.put("dummy", () -> new DummySource());
 		SOURCE_TYPES.put("modbus-tcp", () -> new ModBusTCPSource());
 	}
 
@@ -216,12 +218,12 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 				BeanDefinitionBuilder.genericBeanDefinition(Object.class, supplier).getBeanDefinition());
 	}
 
-	public void configureObject(Object target, MappingNode node, boolean ignoreTypeKey) throws ConfigurationException {
+	public void configureObject(Object target, MappingNode node, boolean ignoreRootObjectKeys) throws ConfigurationException {
 
 		for (NodeTuple t : node.getValue()) {
 			Node keyNode = t.getKeyNode();
 			String key = expectScalar(t.getKeyNode()).getValue();
-			if (ignoreTypeKey && key.equals("type")) {
+			if (ignoreRootObjectKeys && (key.equals("type") || key.equals("enabled"))) {
 				continue;
 			}
 
