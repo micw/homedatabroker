@@ -40,9 +40,9 @@ When this feature is in place, OpenMetrics Http Output will be able to persist m
 
 This output will be able publish metrics via MQTT
 
-### Victron Output (planned)
+### Victron Output (work-in-progress)
 
-I am planning to install a Victron Multiplus II battery inverter in my house. After I fugured out how I cen send grid meter data to Victron, I will add this as output to HomeDataBroker.
+I am planning to install a Victron Multiplus II battery inverter in my house. In branch feature/victron-dbus is a PoC that sends and updates grid meter data on a Victron Venus OS device. During the next months I will start to implement this as a new output.
 
 ## Aggregations (planned)
 
