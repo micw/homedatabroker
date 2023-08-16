@@ -29,6 +29,7 @@ import org.yaml.snakeyaml.nodes.ScalarNode;
 import org.yaml.snakeyaml.nodes.SequenceNode;
 
 import de.wyraz.homedatabroker.output.ConsoleOutput;
+import de.wyraz.homedatabroker.output.MQTTOutput;
 import de.wyraz.homedatabroker.output.OpenMetricsPushOutput;
 import de.wyraz.homedatabroker.source.DummySource;
 import de.wyraz.homedatabroker.source.ModBusTCPSource;
@@ -54,6 +55,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 	protected static Map<String, Supplier<AbstractComponent>> OUTPUT_TYPES = new HashMap<>();
 	static {
 		OUTPUT_TYPES.put("console", () -> new ConsoleOutput());
+		OUTPUT_TYPES.put("mqtt", () -> new MQTTOutput());
 		OUTPUT_TYPES.put("openmetrics", () -> new OpenMetricsPushOutput());
 	}
 
