@@ -36,9 +36,9 @@ No documentation available yet, see config.example.yaml for an example that work
 
 When this feature is in place, OpenMetrics Http Output will be able to persist metrics if the endpoint is not available and batch-upload the outstanding metrics as soon as the endpoint is available again
 
-### MQTT Output (planned)
+### MQTT Output (work-in-progress)
 
-This output will be able publish metrics via MQTT
+This output will be able publish metrics via MQTT. MQTT works. Need to implement reconnenct handling, tests, docs.
 
 ### Victron Output (work-in-progress)
 
