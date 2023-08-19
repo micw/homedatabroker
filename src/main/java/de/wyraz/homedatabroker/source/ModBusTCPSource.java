@@ -5,6 +5,8 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
@@ -84,15 +86,20 @@ public class ModBusTCPSource extends AbstractSource {
 	@NotNull
 	protected Integer port=509;
 	
+	@NotNull
+	protected Integer unitId=0;
+	
 	@NotEmpty
 	protected List<ModBusMetric> metrics;
 
 	@NotEmpty
 	protected String cron;
-
+	
 	@Autowired
 	protected TaskScheduler scheduler;
 
+	protected static Map<String,Object> connectionLocks=new ConcurrentHashMap<>();
+	
 	@PostConstruct
 	protected void start() {
 		scheduler.schedule(() -> { schedule(); }, new CronTrigger(cron));
@@ -103,70 +110,76 @@ public class ModBusTCPSource extends AbstractSource {
 	
 	protected void schedule() {
 		
-		if (con==null || !con.isConnected()) {
-			try {
-				hostAddress=InetAddress.getByName(host); // resolve on each reconnect (address may have changed)
-			} catch (UnknownHostException ex) {
-				if (!checkLastException(ex)) {
-					if (hostAddress==null) {
-						log.warn("Unknown host: {}", host);
-						return;
-					}
-					log.warn("Unknown host: {} - using last address {}", host, hostAddress);
-				}
-			}
-			
-			con=new TCPMasterConnection(hostAddress);
-			con.setTimeout(1000);
-			con.setPort(8899);
-		}
+		Object lock=connectionLocks.computeIfAbsent(host+":"+port, (k) -> new Object());
 		
-		try {
-			con.connect();
-		} catch (Exception ex) {
-			if (!checkLastException(ex)) {
-				log.warn("Unable to connect to {}:{}: {}", host, port, ex.getMessage());
-			}
-			return;
-		}
-
-		try {
-			
-			for (ModBusMetric metric: metrics) {
-				if (metric.type==ModBusRegType.input) {
-					
-					ReadInputRegistersRequest rreq = new ReadInputRegistersRequest(metric.register,
-							(metric.format.byteCount+1)/2); // Registers are in "words" (2 bytes)
-					
-					ModbusTCPTransaction trans = new ModbusTCPTransaction(con);
-					trans.setRetries(1);
-					trans.setReconnecting(false);
-					trans.setRequest(rreq);
-					trans.execute();
-
-					log.debug("Request  {} : {}",metric.id, rreq.getHexMessage());
-
-					ReadInputRegistersResponse rres = (ReadInputRegistersResponse) trans.getResponse();
-			
-					log.debug("Response {}: {}",metric.id, rres.getHexMessage());
-					
-					Number result=metric.format.decode(rres.getMessage(),1);
-					
-					if (metric.scale!=null && metric.scale!=0) {
-						result = scaleNumber(result, metric.scale);
+		synchronized(lock) {
+			if (con==null || !con.isConnected()) {
+				try {
+					hostAddress=InetAddress.getByName(host); // resolve on each reconnect (address may have changed)
+				} catch (UnknownHostException ex) {
+					if (!checkLastException(ex)) {
+						if (hostAddress==null) {
+							log.warn("Unknown host: {}", host);
+							return;
+						}
+						log.warn("Unknown host: {} - using last address {}", host, hostAddress);
 					}
-
-					publishMetric(metric.id, result, metric.unit);
 				}
+				
+				con=new TCPMasterConnection(hostAddress);
+				con.setTimeout(1000);
+				con.setPort(8899);
 			}
 			
-			if (lastException!=null) {
-				lastException=null; // everything is ok
-				log.warn("Modbus errors resolved");
+			try {
+				con.connect();
+			} catch (Exception ex) {
+				if (!checkLastException(ex)) {
+					log.warn("Unable to connect to {}:{}: {}", host, port, ex.getMessage());
+				}
+				return;
 			}
-		} catch (Exception ex) {
-			if (!checkLastException(ex)) {
-				log.warn("Modbus error", ex);
+	
+			try {
+				
+				for (ModBusMetric metric: metrics) {
+					if (metric.type==ModBusRegType.input) {
+						
+						ReadInputRegistersRequest rreq = new ReadInputRegistersRequest(metric.register,
+								(metric.format.byteCount+1)/2); // Registers are in "words" (2 bytes)
+						
+						rreq.setUnitID(unitId);
+						
+						ModbusTCPTransaction trans = new ModbusTCPTransaction(con);
+						trans.setRetries(1);
+						trans.setReconnecting(false);
+						trans.setRequest(rreq);
+						trans.execute();
+	
+						log.debug("Request  {} : {}",metric.id, rreq.getHexMessage());
+	
+						ReadInputRegistersResponse rres = (ReadInputRegistersResponse) trans.getResponse();
+				
+						log.debug("Response {}: {}",metric.id, rres.getHexMessage());
+						
+						Number result=metric.format.decode(rres.getMessage(),1);
+						
+						if (metric.scale!=null && metric.scale!=0) {
+							result = scaleNumber(result, metric.scale);
+						}
+	
+						publishMetric(metric.id, result, metric.unit);
+					}
+				}
+				
+				if (lastException!=null) {
+					lastException=null; // everything is ok
+					log.warn("Modbus errors resolved");
+				}
+			} catch (Exception ex) {
+				if (!checkLastException(ex)) {
+					log.warn("Modbus error", ex);
+				}
 			}
 		}
 	}
