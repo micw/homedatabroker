@@ -52,6 +52,18 @@
 		    <artifactId>j2mod</artifactId>
 		    <version>2.5.5</version>
 		</dependency>
+		
+		<!-- dbus for communication to Victron's Venus OS -->
+		<dependency>
+		    <groupId>com.github.hypfvieh</groupId>
+		    <artifactId>dbus-java-core</artifactId>
+		    <version>4.3.0</version>
+		</dependency>		
+		<dependency>
+		    <groupId>com.github.hypfvieh</groupId>
+		    <artifactId>dbus-java-transport-tcp</artifactId>
+		    <version>4.3.0</version>
+		</dependency>		
 
 	</dependencies>
 	
