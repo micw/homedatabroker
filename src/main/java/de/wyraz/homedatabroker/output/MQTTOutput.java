@@ -77,9 +77,17 @@ public class MQTTOutput extends AbstractOutput<MQTTOutput.MQTTOutputMetric> {
 			// FIXME: retry on initial failure
 			
 			log.info("Connected to {}",mqttHost);
-			
 		}
 	}
+	
+	@PostConstruct
+	protected void disconnect() {
+		if (mqttClient!=null) {
+			mqttClient.disconnect();
+			mqttClient=null;
+		}
+	}
+	
 	
 	@Override
 	public void publishMetric(MQTTOutputMetric metric, ZonedDateTime time, String name, Number value, String unit) {
