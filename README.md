@@ -18,9 +18,9 @@ This source will be able to read arbitrary metrics from MQTT topics. I also plan
 
 Then it's finished, I can replace https://github.com/micw/mqtt2openmetrics with HomeDataBroker.
 
-### Tibber Pulse HTTP (planned)
+### Tibber Pulse HTTP
 
-This source will allow to read SML directly from a Tibber Pulse device. It will allow to replace https://github.com/micw/tibber-pulse-reader with HomeDataBroker.
+This source allows to read SML directly from a Tibber Pulse device. It allows to replace https://github.com/micw/tibber-pulse-reader with HomeDataBroker.
 
 ## Outputs
 

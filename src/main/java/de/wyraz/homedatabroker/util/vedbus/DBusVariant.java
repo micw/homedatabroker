@@ -1,5 +1,6 @@
 package de.wyraz.homedatabroker.util.vedbus;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,6 +48,11 @@ public class DBusVariant implements DBusInterface {
 	public PropertiesChanged toPropertiesChangedSignal() throws DBusException {
 		Map<String,Variant<?>> changes=new HashMap<>();
 		Object value=this.value.get();
+		
+		if (value instanceof BigDecimal) {
+			value=((BigDecimal)value).longValue();
+		}
+		
 		changes.put("Value", new Variant<>(value));
 		changes.put("Text", new Variant<>(value==null?null:value.toString()));
 		return new PropertiesChanged(path, changes);
