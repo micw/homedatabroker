@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.freedesktop.dbus.connections.impl.DBusConnection;
-import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
+import org.freedesktop.dbus.connections.impl.SimpleDBusConnectionBuilder;
 import org.freedesktop.dbus.exceptions.DBusException;
 
 import de.wyraz.homedatabroker.util.vedbus.DBusVariant;
@@ -69,7 +69,7 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 	@PostConstruct
 	protected void start() throws Exception {
 		
-		dbusCon=DBusConnectionBuilder.forAddress(dbusUrl).build();
+		dbusCon = new SimpleDBusConnectionBuilder(dbusUrl).build();
 		
 		dbusCon.requestBusName("com.victronenergy.grid.dbus_grid_31");
 		
