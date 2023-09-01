@@ -4,3 +4,4 @@ logging:
   level:
     ROOT: warn
     de.wyraz.homedatabroker: ${LOG_LEVEL:info}
+    de.wyraz.homedatabroker.util.vedbus.DBusVariant: info

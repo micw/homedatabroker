@@ -35,13 +35,11 @@ public class DBusVariant implements DBusInterface {
 	
 	public Variant<?> GetValue() {
 		Object value=this.value.get();
-		System.err.println("getValue "+path+" "+value);
 		return new Variant<>(value);
 	}
 	
 	public String GetText() {
 		Object value=this.value.get();
-		System.err.println("getText "+path+" "+value);
 		return value==null?null:value.toString();
 	}
 

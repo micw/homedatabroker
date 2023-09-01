@@ -1,4 +1,13 @@
 sources:
+  - id: dummy
+    type: dummy
+    enabled: true
+    cron: '*/2 * * * * *'
+    metrics:
+    - id: dummy1
+    - id: dummy2
+    - id: dummy3
+
   - id: pvOst
     type: modbus-tcp
     host: 192.168.3.201
@@ -236,3 +245,23 @@ outputs:
           meter: pvGarage
           channel: 0
           
+  - id: mqtt
+    type: mqtt
+    mqttHost: 192.168.1.3
+    mqttUsername: mqttuser
+    mqttPassword: S3cr3tPass
+    
+    metrics:
+      - source: dummy.dummy1
+        topic: dummy/dummy1
+
+  - id: vedbusgridmeter
+    type: vedbusgridmeter
+    dbusUrl: tcp:host=1.2.3.4,port=78
+    metrics:
+      - source: dummy.dummy1
+        target: AC_L1_POWER
+      - source: dummy.dummy2
+        target: AC_L2_POWER
+      - source: dummy.dummy3
+        target: AC_L3_POWER
