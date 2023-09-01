@@ -32,6 +32,7 @@ import de.wyraz.homedatabroker.output.ConsoleOutput;
 import de.wyraz.homedatabroker.output.MQTTOutput;
 import de.wyraz.homedatabroker.output.OpenMetricsPushOutput;
 import de.wyraz.homedatabroker.output.VictronDbusGridMeterOutput;
+import de.wyraz.homedatabroker.source.VictronDBusSource;
 import de.wyraz.homedatabroker.source.DummySource;
 import de.wyraz.homedatabroker.source.ModBusTCPSource;
 import de.wyraz.homedatabroker.source.TibberPulseHttpSource;
@@ -53,6 +54,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 		SOURCE_TYPES.put("dummy", () -> new DummySource());
 		SOURCE_TYPES.put("modbus-tcp", () -> new ModBusTCPSource());
 		SOURCE_TYPES.put("tibber-pulse-http", () -> new TibberPulseHttpSource());
+		SOURCE_TYPES.put("victron-dbus", () -> new VictronDBusSource());
 	}
 
 	protected static Map<String, Supplier<AbstractComponent>> OUTPUT_TYPES = new HashMap<>();
@@ -60,7 +62,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 		OUTPUT_TYPES.put("console", () -> new ConsoleOutput());
 		OUTPUT_TYPES.put("mqtt", () -> new MQTTOutput());
 		OUTPUT_TYPES.put("openmetrics", () -> new OpenMetricsPushOutput());
-		OUTPUT_TYPES.put("vedbusgridmeter", () -> new VictronDbusGridMeterOutput());
+		OUTPUT_TYPES.put("victron-dbus-gridmeter", () -> new VictronDbusGridMeterOutput());
 	}
 
 	protected Node readYamlConfig(File configFile) throws ConfigurationException {

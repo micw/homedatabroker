@@ -16,7 +16,20 @@ public class SimpleDBusConnectionBuilder extends BaseConnectionBuilder<SimpleDBu
 	}
 
 	final String machineId=String.format("%s@%s", Util.getCurrentUser(), Util.getHostName());;
+	
+	boolean shared = true;
+	boolean registerSelf = true;
 
+	public SimpleDBusConnectionBuilder withShared(boolean shared) {
+		this.shared = shared;
+		return this;
+	}
+
+	public SimpleDBusConnectionBuilder withRegisterSelf(boolean registerSelf) {
+		this.registerSelf = registerSelf;
+		return this;
+	}
+	
     /**
      * Create the new {@link DBusConnection}.
      *
@@ -28,12 +41,27 @@ public class SimpleDBusConnectionBuilder extends BaseConnectionBuilder<SimpleDBu
         ReceivingServiceConfig cfg = buildThreadConfig();
         TransportConfig transportCfg = buildTransportConfig();
 
-        DBusConnection c = new DBusConnection(false, machineId, transportCfg, cfg);
+        DBusConnection c;
+        if (shared) {
+            synchronized (DBusConnection.CONNECTIONS) {
+                String busAddressStr = transportCfg.getBusAddress().toString();
+                c = DBusConnection.CONNECTIONS.get(busAddressStr);
+                if (c != null) {
+                    c.concurrentConnections.incrementAndGet();
+                    return c; // this connection already exists, do not change anything
+                } else {
+                    c = new DBusConnection(shared, machineId, transportCfg, cfg);
+                    DBusConnection.CONNECTIONS.put(busAddressStr, c);
+                }
+            }
+        } else {
+            c = new DBusConnection(shared, machineId, transportCfg, cfg);
+        }
 
         c.setDisconnectCallback(getDisconnectCallback());
         c.setWeakReferences(isWeakReference());
         DBusConnection.setEndianness(getEndianess());
-        c.connect(true);
+        c.connect(registerSelf);
         return c;
     }	
 }

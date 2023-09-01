@@ -16,7 +16,7 @@ public abstract class AbstractScheduledSource extends AbstractSource {
 	protected TaskScheduler scheduler;
 
 	@PostConstruct
-	protected void start() {
+	protected void start() throws Exception {
 		scheduler.schedule(() -> { schedule(); }, new CronTrigger(cron));
 	}
 	

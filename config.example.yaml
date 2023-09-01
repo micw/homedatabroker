@@ -168,6 +168,17 @@ sources:
       scale: -1
       unit: °C
 
+  - id: battery
+    type: victron-dbus
+    enabled: true
+    dbusUrl: tcp:host=192.168.1.9,port=78
+    cron: '*/1 * * * * *'
+    metrics:
+      - id: powerInL1
+        object: com.victronenergy.vebus.ttyUSB0
+        path: /Ac/ActiveIn/L1/P
+        unit: W
+
       
 outputs:
   - id: victoriametrics
@@ -264,7 +275,7 @@ outputs:
 
   - id: vedbusgridmeter
     type: vedbusgridmeter
-    dbusUrl: tcp:host=1.2.3.4,port=78
+    dbusUrl: tcp:host=192.168.1.9,port=78
     metrics:
       - source: dummy.dummy1
         target: AC_L1_POWER
