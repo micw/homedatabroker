@@ -27,6 +27,8 @@ public class VictronDBusSource extends AbstractScheduledSource {
 		protected String path;
 		
 		protected String unit;
+		
+		protected boolean negate;
 	}
 	
 	@DBusInterfaceName("com.victronenergy.BusItem")
@@ -60,7 +62,12 @@ public class VictronDBusSource extends AbstractScheduledSource {
 			try {
 				Variant v=dbusCon.getRemoteObject(m.object, m.path, IDBusVariant.class).GetValue();
 				if (v.getValue() instanceof Number) {
-					publishMetric(m.id, (Number) v.getValue(), m.unit);
+					Number value=(Number) v.getValue();
+					if (m.negate) {
+						value=-value.doubleValue();
+					}
+					
+					publishMetric(m.id, value, m.unit);
 				} else {
 					log.warn("DBUS Item on {} {} is not numeric: {}",m.object, m.path,v.getType());
 				}
