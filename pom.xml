@@ -63,7 +63,15 @@
 		    <groupId>com.github.hypfvieh</groupId>
 		    <artifactId>dbus-java-transport-tcp</artifactId>
 		    <version>4.3.0</version>
-		</dependency>		
+		</dependency>
+		
+		<!-- for SML decoding. TODO: get rid of it -->
+		<dependency>
+			<groupId>org.openmuc</groupId>
+			<artifactId>jsml</artifactId>
+			<version>1.1.2</version>
+		</dependency>
+
 
 	</dependencies>
 	

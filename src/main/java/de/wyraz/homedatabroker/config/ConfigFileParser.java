@@ -34,6 +34,7 @@ import de.wyraz.homedatabroker.output.OpenMetricsPushOutput;
 import de.wyraz.homedatabroker.output.VictronDbusGridMeterOutput;
 import de.wyraz.homedatabroker.source.DummySource;
 import de.wyraz.homedatabroker.source.ModBusTCPSource;
+import de.wyraz.homedatabroker.source.TibberPulseHttpSource;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -51,6 +52,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 	static {
 		SOURCE_TYPES.put("dummy", () -> new DummySource());
 		SOURCE_TYPES.put("modbus-tcp", () -> new ModBusTCPSource());
+		SOURCE_TYPES.put("tibber-pulse-http", () -> new TibberPulseHttpSource());
 	}
 
 	protected static Map<String, Supplier<AbstractComponent>> OUTPUT_TYPES = new HashMap<>();

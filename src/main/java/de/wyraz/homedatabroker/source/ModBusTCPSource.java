@@ -8,16 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.support.CronTrigger;
-
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -25,7 +20,7 @@ import jakarta.validation.constraints.NotNull;
  * https://csimn.com/MHelp-VP3-TM/vp3-tm-appendix-C.html
  * @author mwyraz
  */
-public class ModBusTCPSource extends AbstractSource {
+public class ModBusTCPSource extends AbstractScheduledSource {
 	
 	public static class ModBusMetric {
 		@NotEmpty
@@ -92,18 +87,7 @@ public class ModBusTCPSource extends AbstractSource {
 	@NotEmpty
 	protected List<ModBusMetric> metrics;
 
-	@NotEmpty
-	protected String cron;
-	
-	@Autowired
-	protected TaskScheduler scheduler;
-
 	protected static Map<String,Object> connectionLocks=new ConcurrentHashMap<>();
-	
-	@PostConstruct
-	protected void start() {
-		scheduler.schedule(() -> { schedule(); }, new CronTrigger(cron));
-	}
 	
 	protected InetAddress hostAddress;
 	protected TCPMasterConnection con;
