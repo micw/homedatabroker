@@ -271,6 +271,9 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 		if (type == Integer.class) {
 			return Integer.parseInt(expectScalar(node).getValue());
 		}
+		if (type == Boolean.class || type==Boolean.TYPE) {
+			return Boolean.parseBoolean(expectScalar(node).getValue());
+		}
 
 		if (Enum.class.isAssignableFrom(type)) {
 			String value = expectScalar(node).getValue();
