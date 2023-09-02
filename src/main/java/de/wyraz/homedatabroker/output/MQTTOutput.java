@@ -3,7 +3,9 @@ package de.wyraz.homedatabroker.output;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -46,7 +48,7 @@ public class MQTTOutput extends AbstractOutput<MQTTOutput.MQTTOutputMetric> {
 	}
 	
 	@PostConstruct
-	protected synchronized void connect() {
+	protected synchronized void connect() throws Exception {
 		if (mqttClient==null) {
 			
 			Mqtt3ClientBuilder builder=Mqtt3Client.builder()
@@ -73,10 +75,9 @@ public class MQTTOutput extends AbstractOutput<MQTTOutput.MQTTOutputMetric> {
 			
 			mqttClient = builder.buildAsync();
 			
-			
 			log.debug("Connecting to {}",mqttHost);
 			
-			mqttClient.connect();
+			mqttClient.connect().get(5, TimeUnit.SECONDS);
 			
 			// FIXME: retry on initial failure
 			
