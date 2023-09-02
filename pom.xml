@@ -72,6 +72,12 @@
 			<scope>test</scope>
 		</dependency>
 		
+		<dependency>
+		    <groupId>org.awaitility</groupId>
+		    <artifactId>awaitility</artifactId>
+		    <scope>test</scope>
+		</dependency>
+
 		<!-- dbus for communication to Victron's Venus OS -->
 		<dependency>
 		    <groupId>com.github.hypfvieh</groupId>
