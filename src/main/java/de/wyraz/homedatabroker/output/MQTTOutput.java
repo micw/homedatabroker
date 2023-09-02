@@ -3,6 +3,7 @@ package de.wyraz.homedatabroker.output;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -65,7 +66,10 @@ public class MQTTOutput extends AbstractOutput<MQTTOutput.MQTTOutputMetric> {
 					.applySimpleAuth();
 			}
 			
-			builder.automaticReconnect();
+			builder.automaticReconnect()
+				.initialDelay(500, TimeUnit.MILLISECONDS)
+				.maxDelay(10, TimeUnit.SECONDS)
+				.applyAutomaticReconnect();
 			
 			mqttClient = builder.buildAsync();
 			

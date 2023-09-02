@@ -78,15 +78,19 @@ public class MQTTOutputIntegrationTests {
 	public void testAutoReconnect() throws Exception {
 
 		mqttServer.stop();
+		Thread.sleep(250);
+		metricRegistry.publish("test", "m1", 1.1d, "A");
+		
 		mqttServer.start();
+		Thread.sleep(250);
 		
 		testClient=new MqttTestClient();
 
 		metricRegistry.publish("test", "m1", 1.1d, "A");
 
-		Awaitility.await().atMost(1, TimeUnit.SECONDS).until(() -> testClient.getMessages().size() > 0);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> testClient.getMessages().size() > 0);
 
-		assertThat(testClient.getMessages()).containsExactly("" + "test/m1 1.1");
+		assertThat(testClient.getMessages()).contains("test/m1 1.1");
 	}
 
 }
