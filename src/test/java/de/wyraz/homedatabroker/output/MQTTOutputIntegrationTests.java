@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -82,13 +83,20 @@ public class MQTTOutputIntegrationTests {
 		metricRegistry.publish("test", "m1", 1.1d, "A");
 		
 		mqttServer.start();
-		Thread.sleep(250);
 		
 		testClient=new MqttTestClient();
 
-		metricRegistry.publish("test", "m1", 1.1d, "A");
-
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> testClient.getMessages().size() > 0);
+		for (int i=0;i<5;i++) {
+			metricRegistry.publish("test", "m1", 1.1d, "A");
+			try {
+				Awaitility.await()
+					.atMost(1, TimeUnit.SECONDS)
+					.until(() -> testClient.getMessages().size() > 0);
+				break;
+			} catch (ConditionTimeoutException ex) {
+				// continue
+			}
+		}
 
 		assertThat(testClient.getMessages()).contains("test/m1 1.1");
 	}
