@@ -14,6 +14,7 @@ import com.hivemq.client.mqtt.mqtt3.Mqtt3Client;
 import com.hivemq.client.mqtt.mqtt3.Mqtt3ClientBuilder;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotEmpty;
 
 /**
@@ -85,7 +86,7 @@ public class MQTTOutput extends AbstractOutput<MQTTOutput.MQTTOutputMetric> {
 		}
 	}
 	
-	@PostConstruct
+	@PreDestroy
 	protected void disconnect() {
 		if (mqttClient!=null) {
 			mqttClient.disconnect();
