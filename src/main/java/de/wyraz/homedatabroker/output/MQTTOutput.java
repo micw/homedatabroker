@@ -3,9 +3,7 @@ package de.wyraz.homedatabroker.output;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
 

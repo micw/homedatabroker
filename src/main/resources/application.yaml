@@ -5,3 +5,6 @@ logging:
     ROOT: warn
     de.wyraz.homedatabroker: ${LOG_LEVEL:info}
     de.wyraz.homedatabroker.util.vedbus.DBusVariant: info
+
+configFile: ${CONFIG_FILE:config.yaml}
+ 

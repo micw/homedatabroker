@@ -45,7 +45,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
-	protected final File configFile = new File("config.yaml");
+	protected File configFile;
 
 	protected GenericApplicationContext ctx;
 
@@ -67,12 +67,12 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 
 	protected Node readYamlConfig(File configFile) throws ConfigurationException {
 		if (!configFile.exists()) {
-			throw new ConfigurationException(null, "No such file");
+			throw new ConfigurationException(null, "No such file: "+configFile);
 		}
 		try (FileReader r = new FileReader(configFile)) {
 			return new Yaml().compose(r);
 		} catch (IOException ex) {
-			throw new ConfigurationException(null, "Unable to read", ex);
+			throw new ConfigurationException(null, "Unable to read "+configFile, ex);
 		}
 	}
 
@@ -154,6 +154,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 	@Override
 	public void initialize(GenericApplicationContext ctx) {
 		this.ctx = ctx;
+		this.configFile=new File(ctx.getEnvironment().getProperty("configFile", "config.yaml"));
 		try {
 			Node config = readYamlConfig(configFile);
 
