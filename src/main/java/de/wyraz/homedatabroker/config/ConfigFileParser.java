@@ -32,10 +32,11 @@ import de.wyraz.homedatabroker.output.ConsoleOutput;
 import de.wyraz.homedatabroker.output.MQTTOutput;
 import de.wyraz.homedatabroker.output.OpenMetricsPushOutput;
 import de.wyraz.homedatabroker.output.VictronDbusGridMeterOutput;
-import de.wyraz.homedatabroker.source.VictronDBusSource;
 import de.wyraz.homedatabroker.source.DummySource;
+import de.wyraz.homedatabroker.source.MQTTSource;
 import de.wyraz.homedatabroker.source.ModBusTCPSource;
 import de.wyraz.homedatabroker.source.TibberPulseHttpSource;
+import de.wyraz.homedatabroker.source.VictronDBusSource;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -52,6 +53,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 	protected static Map<String, Supplier<AbstractComponent>> SOURCE_TYPES = new HashMap<>();
 	static {
 		SOURCE_TYPES.put("dummy", () -> new DummySource());
+		SOURCE_TYPES.put("mqtt", () -> new MQTTSource());
 		SOURCE_TYPES.put("modbus-tcp", () -> new ModBusTCPSource());
 		SOURCE_TYPES.put("tibber-pulse-http", () -> new TibberPulseHttpSource());
 		SOURCE_TYPES.put("victron-dbus", () -> new VictronDBusSource());
@@ -293,16 +295,11 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 
 		if (type.isAssignableFrom(List.class) && (generic instanceof ParameterizedType)
 				&& (((ParameterizedType) generic).getActualTypeArguments()[0]) instanceof Class) {
-			Class<?> elementType = (Class) ((ParameterizedType) generic).getActualTypeArguments()[0];
+			
+			Class<?> elementClass = (Class) ((ParameterizedType) generic).getActualTypeArguments()[0];
 			List<Object> result = new ArrayList<>();
 			for (Node n : expectSequence(node).getValue()) {
-				Object el;
-				try {
-					el = elementType.getConstructor().newInstance();
-				} catch (ReflectiveOperationException ex) {
-					throw new ConfigurationException(node, "Unexpected error", ex);
-				}
-				configureObject(el, expectMap(n), false);
+				Object el = createObject(n, elementClass, elementClass);
 				result.add(el);
 			}
 
@@ -321,7 +318,17 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 			return result;
 		}
 		
-		throw new ConfigurationException(node, "Unimplemented target type: %s", generic);
+		// Arbitrary (potentially nested) Object
+		{
+			Object el;
+			try {
+				el = type.getConstructor().newInstance();
+			} catch (ReflectiveOperationException ex) {
+				throw new ConfigurationException(node, "Unexpected error", ex);
+			}
+			configureObject(el, expectMap(node), false);
+			return el;
+		}
 	}
 
 }
