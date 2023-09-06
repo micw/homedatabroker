@@ -1,6 +1,9 @@
 package de.wyraz.homedatabroker.source;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.codec.DecoderException;
@@ -38,13 +42,13 @@ public class MQTTSource extends AbstractSource {
 		
 		RAW {
 			@Override
-			List<Map<String, Object>> extract(byte[] payload) {
+			List<Map<String, String>> extract(byte[] payload) {
 				return Collections.singletonList(Collections.singletonMap("VALUE", new String(payload, StandardCharsets.UTF_8)));
 			}
 		},
 		SML {
 			@Override
-			List<Map<String, Object>> extract(byte[] payload) {
+			List<Map<String, String>> extract(byte[] payload) {
 				SMLMeterData data;
 				try {
 					data=SMLDecoder.decode(payload, true);
@@ -53,15 +57,15 @@ public class MQTTSource extends AbstractSource {
 					return Collections.emptyList();
 				}
 				
-				List<Map<String,Object>> result=new ArrayList<>();
+				List<Map<String,String>> result=new ArrayList<>();
 				
 				if (data!=null) {
 					
 					for (SMLMeterData.Reading r: data.getReadings()) {
-						Map<String, Object> entry=new HashMap<>();
+						Map<String, String> entry=new HashMap<>();
 						entry.put("SML:NAME", StringUtils.firstNonBlank(r.getName(),r.getObisCode()));
 						entry.put("SML:OBIS", r.getObisCode());
-						entry.put("VALUE", r.getValue());
+						entry.put("VALUE", r.getValue()==null?null:String.valueOf(r.getValue()));
 						entry.put("UNIT", r.getUnit());
 						result.add(entry);
 					}
@@ -72,7 +76,7 @@ public class MQTTSource extends AbstractSource {
 		},
 		SML_HEX {
 			@Override
-			List<Map<String, Object>> extract(byte[] payload) {
+			List<Map<String, String>> extract(byte[] payload) {
 				try {
 					payload=Hex.decodeHex(new String(payload, StandardCharsets.UTF_8));
 				} catch (DecoderException ex) {
@@ -85,7 +89,7 @@ public class MQTTSource extends AbstractSource {
 		
 		;
 		
-		abstract List<Map<String,Object>> extract(byte[] payload); 
+		abstract List<Map<String,String>> extract(byte[] payload); 
 	}
 	
 	public static class Subscription {
@@ -210,27 +214,91 @@ public class MQTTSource extends AbstractSource {
 	
 	protected void consume(String topic, byte[] payload) {
 
-		Map<String, String> topicParts=new HashMap<>();
-		{
-			topicParts.put("TOPIC", topic);
-			int pos=1;
-			for (String s: topic.split("/")) {
-				topicParts.put("TOPIC:"+(pos++), s);
-			}
-		}
-		
 		for (Subscription sub: subscribe) {
 			if (sub.matches(topic)) {
 				
-				for (Map<String,Object> extracted: sub.extract.extract(payload)) {
+				for (Map<String,String> values: sub.extract.extract(payload)) {
+
+					String metricId=replacePlaceholders(sub.metric, topic, values);
+					Number value=parseNumber(replacePlaceholders(sub.value, topic, values));
+					String unit=replacePlaceholders(sub.unit, topic, values);
 					
-					// TODO: replace placeholders, parse number, send metrics
-					
-					System.err.println(extracted);
+					// TODO: use timestamp from mqtt if there is a Use-Case for it
+
+					publishMetric(metricId, value, unit);
 				}
 			}
 		}
 	}
+	
+	protected static Pattern placeholderPattern=Pattern.compile("\\$\\(([^\\)]+?)\\)"); 
+	protected String replacePlaceholders(String template, String topic, Map<String,String> values) {
+		if (template==null) {
+			return null;
+		}
+        StringBuilder result = new StringBuilder();
+        Matcher m = placeholderPattern.matcher(template);
+        while (m.find()) {
+            m.appendReplacement(result, "");
+            result.append(replacePlaceholder(m.group(1), m.group(), topic, values));
+        }
+        m.appendTail(result);
+
+        return result.toString();
+    }
+
+	protected String replacePlaceholder(String placeholder, String originalPlaceholder, String topic, Map<String,String> values) {
+		
+		if (placeholder.startsWith("TOPIC:")) {
+			try {
+				int pos=Integer.parseInt(placeholder.substring(6))-1;
+				String[] topicParts=topic.split("/");
+				if (pos>=0 && pos<topicParts.length) {
+					return topicParts[pos];
+				}
+			} catch (RuntimeException ex) {
+				ex.printStackTrace();
+			}
+		}
+
+		if (values.containsKey(placeholder)) {
+			return values.get(placeholder);
+		}
+		
+		return "";
+	}
+	
+	protected Number parseNumber(String value) {
+		if (value==null) return null;
+		try {
+			if (value.contains(".")) {
+				return Double.parseDouble(value);
+			} else {
+				return Long.parseLong(value);
+			}
+		} catch (RuntimeException ex) {
+			ex.printStackTrace();
+			// TODO: log
+		}
+		return null;
+	}
+	protected ZonedDateTime parseTimestamp(String value) {
+		if (value!=null) {
+			try {
+				return ZonedDateTime.parse(value);
+			} catch (Exception ex) {
+				//ignored
+			}
+			try {
+				return LocalDateTime.parse(value).atZone(ZoneId.systemDefault());
+			} catch (Exception ex) {
+				//ignored
+			}
+		}
+		
+		return ZonedDateTime.now();
+	}
+	
 	
 	@PreDestroy
 	protected void disconnect() {
