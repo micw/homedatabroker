@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -59,8 +61,12 @@ public class VictronDbusGridMeterOutputIntegrationTests {
 	}
 
 	@After
-	public void teardown() throws Exception {
-		veOutput.stop();
+	public void teardown() {
+		try {
+			veOutput.stop();
+		} catch (Exception ex) {
+			
+		}
 	}
 	
 	@Test
@@ -70,5 +76,17 @@ public class VictronDbusGridMeterOutputIntegrationTests {
 		assertThat(dbusQuery()).doesNotContain(" com.victronenergy.grid.dbus_grid_31");
 	}
 	
+	@Test
+	public void testAutoReconnectDisconnect() throws Exception {
+		assertThat(dbusQuery()).contains(" com.victronenergy.grid.dbus_grid_31");
+		dbusServer.stop();
+		dbusServer.start();
+		
+		Awaitility.await().atMost(2,TimeUnit.SECONDS).until(()->veOutput.tryConnect());
+		
+		Awaitility.await().atMost(2,TimeUnit.SECONDS).untilAsserted(() -> {
+			assertThat(dbusQuery()).contains(" com.victronenergy.grid.dbus_grid_31");			
+		});
+	}
 
 }
