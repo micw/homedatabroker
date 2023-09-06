@@ -4,10 +4,12 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.SimpleDBusConnectionBuilder;
 import org.freedesktop.dbus.exceptions.DBusException;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import de.wyraz.homedatabroker.util.vedbus.DBusVariant;
 import jakarta.annotation.PostConstruct;
@@ -68,32 +70,68 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 	
 	@PostConstruct
 	protected void start() throws Exception {
-		
-		dbusCon = new SimpleDBusConnectionBuilder(dbusUrl).build();
-		
-		dbusCon.requestBusName("com.victronenergy.grid.dbus_grid_31");
-		
-		dbusCon.exportObject(new DBusVariant("/Mgmt/ProcessName","homedatabroker"));
-		dbusCon.exportObject(new DBusVariant("/Mgmt/ProcessVersion","1.0.0"));
-		dbusCon.exportObject(new DBusVariant("/Mgmt/Connection","DBus Grid"));
-		dbusCon.exportObject(new DBusVariant("/DeviceInstance",31));
-		dbusCon.exportObject(new DBusVariant("/ProductId","65535"));
-		dbusCon.exportObject(new DBusVariant("/ProductName","DBus Grid"));
-		dbusCon.exportObject(new DBusVariant("/FirmwareVersion","1.0.0"));
-		dbusCon.exportObject(new DBusVariant("/HardwareVersion","1.0.0"));
-		dbusCon.exportObject(new DBusVariant("/CustomName","DBus Grid"));
-		dbusCon.exportObject(new DBusVariant("/Connected","1"));
-		dbusCon.exportObject(new DBusVariant("/Latency",null));
-		
 		for (GridValue gv: GridValue.values()) {
 			ValueHolder vh=new ValueHolder();
 			vh.value = gv.initialValue;
 			vh.variant = new DBusVariant(gv.path,()->vh.value);
 			values.put(gv, vh);
-			dbusCon.exportObject(vh.variant);
 		}
 		
+		tryConnect();
 	}
+	
+	protected boolean hasConnectionError=false;
+	
+	@Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
+	protected synchronized boolean tryConnect() {
+		
+		if (dbusCon!=null && dbusCon.isConnected()) {
+			hasConnectionError=false;
+			return true;
+		}
+		
+		try {
+			DBusConnection newDbusCon = new SimpleDBusConnectionBuilder(dbusUrl)
+					.withShared(false)
+					.build();
+			
+			newDbusCon.requestBusName("com.victronenergy.grid.dbus_grid_31");
+			
+			newDbusCon.exportObject(new DBusVariant("/Mgmt/ProcessName","homedatabroker"));
+			newDbusCon.exportObject(new DBusVariant("/Mgmt/ProcessVersion","1.0.0"));
+			newDbusCon.exportObject(new DBusVariant("/Mgmt/Connection","DBus Grid"));
+			newDbusCon.exportObject(new DBusVariant("/DeviceInstance",31));
+			newDbusCon.exportObject(new DBusVariant("/ProductId","65535"));
+			newDbusCon.exportObject(new DBusVariant("/ProductName","DBus Grid"));
+			newDbusCon.exportObject(new DBusVariant("/FirmwareVersion","1.0.0"));
+			newDbusCon.exportObject(new DBusVariant("/HardwareVersion","1.0.0"));
+			newDbusCon.exportObject(new DBusVariant("/CustomName","DBus Grid"));
+			newDbusCon.exportObject(new DBusVariant("/Connected","1"));
+			newDbusCon.exportObject(new DBusVariant("/Latency",null));
+	
+			for (ValueHolder vh: values.values()) {
+				newDbusCon.exportObject(vh.variant);
+			}
+			
+			this.dbusCon = newDbusCon;
+			
+			log.info("Connected connect to {}",dbusUrl);
+			
+			hasConnectionError=false;
+			return true;
+		} catch (DBusException ex) {
+			// reduce log level after the first failure
+			if (hasConnectionError) {
+				log.trace("Unable to connect to {}",dbusUrl, ex);
+			} else {
+				log.warn("Unable to connect to {}",dbusUrl, ex);
+			}
+			
+			hasConnectionError=true;
+			return false;
+		}
+	}
+	
 	@PreDestroy
 	protected void stop() throws Exception {
 		if (dbusCon!=null) {
@@ -104,13 +142,16 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 	@Override
 	public void publishMetric(VictronDbusOutputMetric metric, ZonedDateTime time, String name, Number value,
 			String unit) {
+		
 		ValueHolder vh=values.get(metric.target);
 		if (vh!=null) {
 			vh.value=value;
-			try {
-				dbusCon.sendMessage(vh.variant.toPropertiesChangedSignal());
-			} catch (DBusException ex) {
-				log.warn("Unable to send PropertiesChangedSignal",ex);
+			if (dbusCon!=null && dbusCon.isConnected()) {
+				try {
+					dbusCon.sendMessage(vh.variant.toPropertiesChangedSignal());
+				} catch (DBusException ex) {
+					log.warn("Unable to send PropertiesChangedSignal",ex);
+				}
 			}
 		} else {
 			log.warn("Unregistered value: {}",metric.target);

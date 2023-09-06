@@ -36,6 +36,9 @@ public class DBusVariant implements DBusInterface {
 	
 	public Variant<?> GetValue() {
 		Object value=this.value.get();
+		if (value==null) {
+			return new Variant<>(Float.NaN);
+		}
 		return new Variant<>(value);
 	}
 	
