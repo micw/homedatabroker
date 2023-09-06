@@ -143,18 +143,15 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 	public void publishMetric(VictronDbusOutputMetric metric, ZonedDateTime time, String name, Number value,
 			String unit) {
 		
-		if (dbusCon!=null && dbusCon.isConnected()) {
-			log.trace("No connection to {}. Dropping value {} = {})",metric.target, value);
-			return;
-		}
-		
 		ValueHolder vh=values.get(metric.target);
 		if (vh!=null) {
 			vh.value=value;
-			try {
-				dbusCon.sendMessage(vh.variant.toPropertiesChangedSignal());
-			} catch (DBusException ex) {
-				log.warn("Unable to send PropertiesChangedSignal",ex);
+			if (dbusCon!=null && dbusCon.isConnected()) {
+				try {
+					dbusCon.sendMessage(vh.variant.toPropertiesChangedSignal());
+				} catch (DBusException ex) {
+					log.warn("Unable to send PropertiesChangedSignal",ex);
+				}
 			}
 		} else {
 			log.warn("Unregistered value: {}",metric.target);

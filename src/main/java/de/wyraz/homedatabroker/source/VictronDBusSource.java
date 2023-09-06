@@ -1,13 +1,15 @@
 package de.wyraz.homedatabroker.source;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import org.freedesktop.dbus.annotations.DBusIgnore;
 import org.freedesktop.dbus.annotations.DBusInterfaceName;
 import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.SimpleDBusConnectionBuilder;
+import org.freedesktop.dbus.exceptions.DBusException;
 import org.freedesktop.dbus.interfaces.DBusInterface;
 import org.freedesktop.dbus.types.Variant;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -46,9 +48,45 @@ public class VictronDBusSource extends AbstractScheduledSource {
 
 	@PostConstruct
 	protected void start() throws Exception {
-		dbusCon = new SimpleDBusConnectionBuilder(dbusUrl).build();
+		tryConnect();
 		super.start();
 	}
+	
+	protected boolean hasConnectionError=false;
+	
+	@Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
+	protected synchronized boolean tryConnect() {
+		
+		if (dbusCon!=null && dbusCon.isConnected()) {
+			hasConnectionError=false;
+			return true;
+		}
+		
+		try {
+			DBusConnection newDbusCon = new SimpleDBusConnectionBuilder(dbusUrl)
+					.withShared(false)
+					.build();
+			
+			this.dbusCon = newDbusCon;
+			
+			log.info("Connected connect to {}",dbusUrl);
+			
+			hasConnectionError=false;
+			return true;
+		} catch (DBusException ex) {
+			// reduce log level after the first failure
+			if (hasConnectionError) {
+				log.trace("Unable to connect to {}",dbusUrl, ex);
+			} else {
+				log.warn("Unable to connect to {}",dbusUrl, ex);
+			}
+			
+			hasConnectionError=true;
+			return false;
+		}
+	}
+	
+	
 	@PreDestroy
 	protected void stop() throws Exception {
 		if (dbusCon!=null) {
@@ -60,7 +98,7 @@ public class VictronDBusSource extends AbstractScheduledSource {
 	protected void schedule() {
 		for (DBusMetric m: metrics) {
 			try {
-				Variant v=dbusCon.getRemoteObject(m.object, m.path, IDBusVariant.class).GetValue();
+				Variant<?> v=dbusCon.getRemoteObject(m.object, m.path, IDBusVariant.class).GetValue();
 				if (v.getValue() instanceof Number) {
 					Number value=(Number) v.getValue();
 					if (m.negate) {
