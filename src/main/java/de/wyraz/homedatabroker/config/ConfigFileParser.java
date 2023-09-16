@@ -192,8 +192,8 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 					MappingNode includeMap = expectMap(include);
 					
 					configContent.addAll(configContent.indexOf(tuple), includeMap.getValue());
-					configContent.remove(tuple);
 				}
+				configContent.remove(tuple);
 			}
 		}
 		

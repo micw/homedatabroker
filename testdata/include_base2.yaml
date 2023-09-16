@@ -1,0 +1,5 @@
+includes:
+  - includes/include1.yaml
+  - includes/include2.yaml
+sources:
+  - one from base1

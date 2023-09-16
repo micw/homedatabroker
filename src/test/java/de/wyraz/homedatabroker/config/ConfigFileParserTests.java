@@ -40,7 +40,7 @@ public class ConfigFileParserTests {
 	}
 	
 	@Test
-	public void testIncludeList() throws Exception {
+	public void testMultipleIncludes() throws Exception {
 		Node node=ConfigFileParser.readYamlConfig("testdata/include_base1.yaml");
 		assertThat(node).isNotNull();
 		
@@ -54,6 +54,24 @@ public class ConfigFileParserTests {
 				+ "sources:\n"
 				+ "- one from includes/include2.yaml\n"
 				+ "- two from includes/include2.yaml");
+	}
+
+	@Test
+	public void testIncludeMultipleFiles() throws Exception {
+		Node node=ConfigFileParser.readYamlConfig("testdata/include_base2.yaml");
+		assertThat(node).isNotNull();
+		
+		String yaml=toYaml(node);
+		System.err.println(yaml);
+		
+		assertThat(yaml).isEqualTo("sources:\n"
+				+ "- one from includes/include1.yaml\n"
+				+ "- two from includes/include1.yaml\n"
+				+ "sources:\n"
+				+ "- one from includes/include2.yaml\n"
+				+ "- two from includes/include2.yaml\n"
+				+ "sources:\n"
+				+ "- one from base1");
 	}
 	
 	@Test
