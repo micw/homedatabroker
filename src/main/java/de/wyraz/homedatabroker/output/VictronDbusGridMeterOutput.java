@@ -2,9 +2,11 @@ package de.wyraz.homedatabroker.output;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.SimpleDBusConnectionBuilder;
@@ -17,6 +19,10 @@ import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * https://github.com/victronenergy/venus/wiki/dbus-api
+ * https://github.com/victronenergy/venus/wiki/dbus
+ */
 public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMeterOutput.VictronDbusOutputMetric> {
 
 	public static class VictronDbusOutputMetric extends AbstractOutputMetric {
@@ -30,26 +36,49 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 		protected DBusVariant variant;
 	}
 	
+	protected static final Function<Object, String> STR_WATT=(value) -> {
+		if (value==null) return null;
+		return String.format(Locale.ENGLISH,"%,.1f W", value);
+	};
+	protected static final Function<Object, String> STR_VOLT=(value) -> {
+		if (value==null) return null;
+		return String.format(Locale.ENGLISH,"%,.1f V", value);
+	};
+	protected static final Function<Object, String> STR_AMPERE=(value) -> {
+		if (value==null) return null;
+		return String.format(Locale.ENGLISH,"%,.1f A", value);
+	};
+	
 	public static enum GridValue {
-		AC_L1_VOLTAGE("/Ac/L1/Voltage",230d),
-		AC_L1_CURRENT("/Ac/L1/Current",null),
-		AC_L1_POWER("/Ac/L1/Power",null),
 		
-		AC_L2_VOLTAGE("/Ac/L2/Voltage",230d),
-		AC_L2_CURRENT("/Ac/L2/Current",null),
-		AC_L2_POWER("/Ac/L2/Power",null),
+		// TODO: Energy requires unit conversion (Wh -> kWh)
+		//AC_ENERGY_FORWARD("/Ac/Energy/Forward",null),
+		//AC_ENERGY_REVERSE("/Ac/Energy/Forward",null),
+		
+		
+		AC_POWER("/Ac/Power",null,STR_WATT),
+		
+		AC_L1_VOLTAGE("/Ac/L1/Voltage",null,STR_VOLT),
+		AC_L1_CURRENT("/Ac/L1/Current",null,STR_AMPERE),
+		AC_L1_POWER("/Ac/L1/Power",null,STR_WATT),
+		
+		AC_L2_VOLTAGE("/Ac/L2/Voltage",null,STR_VOLT),
+		AC_L2_CURRENT("/Ac/L2/Current",null,STR_AMPERE),
+		AC_L2_POWER("/Ac/L2/Power",null,STR_WATT),
 
-		AC_L3_VOLTAGE("/Ac/L3/Voltage",230d),
-		AC_L3_CURRENT("/Ac/L3/Current",null),
-		AC_L3_POWER("/Ac/L3/Power",null),
+		AC_L3_VOLTAGE("/Ac/L3/Voltage",null,STR_VOLT),
+		AC_L3_CURRENT("/Ac/L3/Current",null,STR_AMPERE),
+		AC_L3_POWER("/Ac/L3/Power",null,STR_WATT),
 		;
 		
 		protected final String path;
 		protected final Number initialValue;
+		protected final Function<Object, String> toStringFunction;
 		
-		private GridValue(String path, Number initialValue) {
+		private GridValue(String path, Number initialValue, Function<Object, String> toStringFunction) {
 			this.path = path;
 			this.initialValue = initialValue;
+			this.toStringFunction = toStringFunction;
 		}
 	}
 
@@ -73,7 +102,7 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 		for (GridValue gv: GridValue.values()) {
 			ValueHolder vh=new ValueHolder();
 			vh.value = gv.initialValue;
-			vh.variant = new DBusVariant(gv.path,()->vh.value);
+			vh.variant = new DBusVariant(gv.path,()->vh.value, gv.toStringFunction);
 			values.put(gv, vh);
 		}
 		
@@ -102,11 +131,11 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 			newDbusCon.exportObject(new DBusVariant("/Mgmt/Connection","DBus Grid"));
 			newDbusCon.exportObject(new DBusVariant("/DeviceInstance",31));
 			newDbusCon.exportObject(new DBusVariant("/ProductId","65535"));
-			newDbusCon.exportObject(new DBusVariant("/ProductName","DBus Grid"));
+			newDbusCon.exportObject(new DBusVariant("/ProductName","Homedatabroker Grid Meter"));
 			newDbusCon.exportObject(new DBusVariant("/FirmwareVersion","1.0.0"));
 			newDbusCon.exportObject(new DBusVariant("/HardwareVersion","1.0.0"));
-			newDbusCon.exportObject(new DBusVariant("/CustomName","DBus Grid"));
-			newDbusCon.exportObject(new DBusVariant("/Connected","1"));
+			newDbusCon.exportObject(new DBusVariant("/CustomName","Homedatabroker Grid Meter"));
+			newDbusCon.exportObject(new DBusVariant("/Connected",1d));
 			newDbusCon.exportObject(new DBusVariant("/Latency",null));
 	
 			for (ValueHolder vh: values.values()) {

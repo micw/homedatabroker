@@ -240,14 +240,16 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 			Map<String, Supplier<AbstractComponent>> typeMap) throws ConfigurationException {
 
 		MappingNode config = expectMap(node);
-		
-		boolean enabled= mapBooleanValue(config, "enabled", true);
-		if (!enabled) {
-			return;
-		}
 
 		String type = mapStringValue(config, "type");
 		String id = mapStringValue(config, "id");
+		
+		boolean enabled= mapBooleanValue(config, "enabled", true);
+		if (!enabled) {
+			log.debug("Skipping disabled component {} / {}", type, id);
+			return;
+		}
+		log.info("Configuring {} / {}", type, id);
 
 		Supplier<? extends AbstractComponent> supplier = typeMap.get(type);
 		if (supplier != null) {

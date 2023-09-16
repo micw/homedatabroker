@@ -1,9 +1,9 @@
 package de.wyraz.homedatabroker.util.vedbus;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.freedesktop.dbus.annotations.DBusIgnore;
@@ -18,15 +18,22 @@ public class DBusVariant implements DBusInterface {
 	
 	protected final String path;
 	protected final Supplier<Object> value;
+	protected final Function<Object,String> toStringFunction;
 
-	public DBusVariant(String path, Supplier<Object> value) {
+	public DBusVariant(String path, Supplier<Object> value, Function<Object,String> toStringFunction) {
 		this.path = path;
 		this.value = value;
+		this.toStringFunction = toStringFunction!=null?toStringFunction:(v) -> {
+			return v==null?null:v.toString();
+		};
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public DBusVariant(String path, Object value, Function<Object,String> toStringFunction) {
+		this(path, (value instanceof Supplier) ? ((Supplier) value) : () -> value, toStringFunction);
+	}
 	public DBusVariant(String path, Object value) {
-		this.path = path;
-		this.value = (value instanceof Supplier) ? ((Supplier) value) : () -> value;
+		this(path, value, null);
 	}
 
 	@Override
@@ -44,7 +51,7 @@ public class DBusVariant implements DBusInterface {
 	
 	public String GetText() {
 		Object value=this.value.get();
-		return value==null?null:value.toString();
+		return toStringFunction.apply(value);
 	}
 
 	@DBusIgnore

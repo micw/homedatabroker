@@ -95,6 +95,7 @@ public class VictronDbusGridMeterOutputIntegrationTests {
 				);
 		
 		assertThat(dbusQuery("com.victronenergy.grid.dbus_grid_31","/Ac/L1/Power","GetValue")).containsExactly("123.45");
+		assertThat(dbusQuery("com.victronenergy.grid.dbus_grid_31","/Ac/L1/Power","GetText")).containsExactly("123.5 W");
 		assertThat(dbusQuery("com.victronenergy.grid.dbus_grid_31","/Ac/L2/Power","GetValue")).containsExactly("nan");
 	}
 	
