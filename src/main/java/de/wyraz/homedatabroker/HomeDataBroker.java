@@ -33,8 +33,6 @@ public class HomeDataBroker {
 				error.append("Application Configuration Error\n");
 				error.append("===============================\n");
 				error.append("\n");
-				error.append(((ConfigurationException) th).getErrorLocation());
-				error.append("\n");
 			} else {
 				error.append("Application startup failed\n");
 				error.append("===========================\n");

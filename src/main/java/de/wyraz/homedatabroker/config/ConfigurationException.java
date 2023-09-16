@@ -24,8 +24,16 @@ public class ConfigurationException extends RuntimeException {
 		return null;
 	}
 	
+	protected static String createMessage(Node node, String message, Object... args) {
+		StringBuilder msg=new StringBuilder();
+		msg.append(String.format(message, extractArgs(args)));
+		msg.append(getErrorLocation(node));
+		
+		return msg.toString();
+	}
+	
 	public ConfigurationException(Node node, String message, Object... args) {
-		super(String.format(message, extractArgs(args)), extractCause(args));
+		super(createMessage(node, message, args),extractCause(args));
 		this.node=node;
 	}
 	
@@ -38,12 +46,15 @@ public class ConfigurationException extends RuntimeException {
 	}
 
 	public String getErrorLocation() {
+		return getErrorLocation(node);
+	}
+	
+	protected static String getErrorLocation(Node node) {
 		StringBuilder sb=new StringBuilder();
-		sb.append(configFile.getAbsolutePath()).append("\n");
 		if (node != null) {
 			sb
 				.append("\n")
-				.append(node.getStartMark().toString().replace("in 'reader', ", "in "))
+				.append(node.getStartMark().toString())
 				.append("\n");
 		}
 		return sb.toString();

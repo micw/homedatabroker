@@ -21,12 +21,16 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.util.ReflectionUtils;
-import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.composer.Composer;
 import org.yaml.snakeyaml.nodes.MappingNode;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.NodeTuple;
 import org.yaml.snakeyaml.nodes.ScalarNode;
 import org.yaml.snakeyaml.nodes.SequenceNode;
+import org.yaml.snakeyaml.parser.ParserImpl;
+import org.yaml.snakeyaml.reader.StreamReader;
+import org.yaml.snakeyaml.resolver.Resolver;
 
 import de.wyraz.homedatabroker.output.ConsoleOutput;
 import de.wyraz.homedatabroker.output.MQTTOutput;
@@ -65,17 +69,6 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 		OUTPUT_TYPES.put("mqtt", () -> new MQTTOutput());
 		OUTPUT_TYPES.put("openmetrics", () -> new OpenMetricsPushOutput());
 		OUTPUT_TYPES.put("victron-dbus-gridmeter", () -> new VictronDbusGridMeterOutput());
-	}
-
-	protected Node readYamlConfig(File configFile) throws ConfigurationException {
-		if (!configFile.exists()) {
-			throw new ConfigurationException(null, "No such file: "+configFile);
-		}
-		try (FileReader r = new FileReader(configFile)) {
-			return new Yaml().compose(r);
-		} catch (IOException ex) {
-			throw new ConfigurationException(null, "Unable to read "+configFile, ex);
-		}
 	}
 
 	public static String getNodeType(Node node) {
@@ -153,6 +146,59 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 		return "true".equals(expectScalar(value).getValue());
 	}
 
+	public static Node readYamlConfig(String configFile) throws ConfigurationException {
+		return readYamlConfig(new File(configFile));
+	}
+	
+	public static Node readYamlConfig(File configFile) throws ConfigurationException {
+		if (!configFile.exists()) {
+			throw new ConfigurationException(null, "No such file: "+configFile);
+		}
+		
+		LoaderOptions loadingConfig=new LoaderOptions();
+		Resolver resolver = new Resolver();
+		
+		try (FileReader r = new FileReader(configFile)) {
+			
+			StreamReader sr=new StreamReader(r);
+			try {
+				Field f=StreamReader.class.getDeclaredField("name");
+				f.setAccessible(true);
+				f.set(sr,configFile.getPath());
+			} catch (Exception ex) {
+				// failed to set the name of the reade - ignored
+			}
+			
+		    Composer composer = new Composer(new ParserImpl(sr, loadingConfig), resolver, loadingConfig);
+			Node config=composer.getSingleNode();
+			processIncludes(configFile, config);
+			return config;
+		} catch (IOException ex) {
+			throw new ConfigurationException(null, "Unable to read "+configFile, ex);
+		}
+	}
+	
+	protected static void processIncludes(File base, Node config) throws ConfigurationException {
+		MappingNode configMap = expectMap(config);
+
+		List<NodeTuple> configContent=configMap.getValue();
+		
+		for (NodeTuple tuple : new ArrayList<>(configContent)) { // iterate on copy, so that the map can be modified
+			String key = expectScalar(tuple.getKeyNode()).getValue();
+			if (key.equals("includes")) {
+				for (Node n : expectSequence(tuple.getValueNode()).getValue()) {
+					File file=new File(base.getParentFile(), expectScalar(n).getValue());
+					Node include = readYamlConfig(file);
+					MappingNode includeMap = expectMap(include);
+					
+					configContent.addAll(configContent.indexOf(tuple), includeMap.getValue());
+					configContent.remove(tuple);
+				}
+			}
+		}
+		
+	}
+	
 	@Override
 	public void initialize(GenericApplicationContext ctx) {
 		this.ctx = ctx;
