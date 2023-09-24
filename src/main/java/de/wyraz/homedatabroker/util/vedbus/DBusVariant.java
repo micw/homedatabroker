@@ -59,6 +59,10 @@ public class DBusVariant implements DBusInterface {
 		Map<String,Variant<?>> changes=new HashMap<>();
 		Object value=this.value.get();
 		
+		if (value==null) {
+			value=Float.NaN;
+		}
+		
 		if (value instanceof BigDecimal) {
 			value=((BigDecimal)value).longValue();
 		}

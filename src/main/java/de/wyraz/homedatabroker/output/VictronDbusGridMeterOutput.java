@@ -32,6 +32,7 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 	}
 	
 	protected static class ValueHolder {
+		ZonedDateTime time;
 		protected Number value;
 		protected DBusVariant variant;
 	}
@@ -87,6 +88,8 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 	
 	@NotEmpty
 	protected List<VictronDbusOutputMetric> metrics;
+	
+	protected int expireAfterSeconds = 15;
 
 	@Override
 	protected List<VictronDbusOutputMetric> getMetrics() {
@@ -107,6 +110,21 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 		}
 		
 		tryConnect();
+	}
+	
+	@Scheduled(cron = "*/5 * * * * *")
+	protected void expireValues() {
+		if (metrics==null || expireAfterSeconds<=0) {
+			return;
+		}
+		for (ValueHolder vh: values.values()) {
+			synchronized(vh) {
+				ZonedDateTime now=ZonedDateTime.now();
+				if (vh.value!=null && vh.time!=null && vh.time.isBefore(now.minusSeconds(expireAfterSeconds))) {
+					updateValue(vh, now, null);
+				}
+			}
+		}
 	}
 	
 	protected boolean hasConnectionError=false;
@@ -174,6 +192,15 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 		
 		ValueHolder vh=values.get(metric.target);
 		if (vh!=null) {
+			updateValue(vh, time, value);
+		} else {
+			log.warn("Unregistered value: {}",metric.target);
+		}
+	}
+
+	protected void updateValue(ValueHolder vh, ZonedDateTime time, Number value) {
+		synchronized(vh) {
+			vh.time=time;
 			vh.value=value;
 			if (dbusCon!=null && dbusCon.isConnected()) {
 				try {
@@ -182,9 +209,8 @@ public class VictronDbusGridMeterOutput extends AbstractOutput<VictronDbusGridMe
 					log.warn("Unable to send PropertiesChangedSignal",ex);
 				}
 			}
-		} else {
-			log.warn("Unregistered value: {}",metric.target);
 		}
 	}
+
 	
 }

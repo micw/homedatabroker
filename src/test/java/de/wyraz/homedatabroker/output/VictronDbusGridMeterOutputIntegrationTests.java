@@ -2,6 +2,8 @@ package de.wyraz.homedatabroker.output;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -120,4 +122,27 @@ public class VictronDbusGridMeterOutputIntegrationTests {
 		assertThat(dbusQuery("com.victronenergy.grid.dbus_grid_31","/Ac/L1/Power","GetValue")).containsExactly("123.45");
 	}
 
+	@Test
+	public void testExpireOldValues() throws Exception {
+		assertThat(dbusQuery()).contains(" com.victronenergy.grid.dbus_grid_31");
+		
+		assertThat(dbusQuery("com.victronenergy.grid.dbus_grid_31","/Ac/L1/Power","GetValue")).containsExactly("nan");
+		
+		metricRegistry.publish(ZonedDateTime.now(), "test", "m1", 123.45, "Watt");
+		
+		assertThat(dbusQuery("com.victronenergy.grid.dbus_grid_31","/Ac/L1/Power","GetValue")).containsExactly("123.45");
+		
+		veOutput.expireValues();
+		
+		assertThat(dbusQuery("com.victronenergy.grid.dbus_grid_31","/Ac/L1/Power","GetValue")).containsExactly("123.45");
+		
+		metricRegistry.publish(ZonedDateTime.now().minusSeconds(30), "test", "m1", 111.22, "Watt");
+		
+		assertThat(dbusQuery("com.victronenergy.grid.dbus_grid_31","/Ac/L1/Power","GetValue")).containsExactly("111.22");
+		
+		veOutput.expireValues();
+		
+		assertThat(dbusQuery("com.victronenergy.grid.dbus_grid_31","/Ac/L1/Power","GetValue")).containsExactly("nan");
+	}
+	
 }

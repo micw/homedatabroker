@@ -21,12 +21,13 @@ public class MetricRegistry {
 	protected Map<String, List<MetricSubscription>> subscriptions=new HashMap<>();
 	
 	public void publish(String sourceId, String metricId, Number value, String unit) {
+		publish(ZonedDateTime.now(), sourceId, metricId, value, unit);
+	}
+	public void publish(ZonedDateTime time, String sourceId, String metricId, Number value, String unit) {
 		
 		log.debug("{}.{} = {} {}", sourceId, metricId, value, (unit==null)?"":unit);
 		
 		String key=sourceId+"."+metricId;
-		
-		ZonedDateTime time=ZonedDateTime.now();
 		
 		List<MetricSubscription> msubs=subscriptions.get(key);
 		if (msubs!=null) {
