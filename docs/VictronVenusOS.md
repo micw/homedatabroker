@@ -1,4 +1,37 @@
+# ModBus access
+
+* For registers, see https://github.com/victronenergy/dbus_modbustcp/blob/master/CCGX-Modbus-TCP-register-list.xlsx
+
+## Example for reading the battery state via modbus
+
+```
+sources:
+  - id: battery
+    type: modbus-tcp
+    connection:
+      host: raspberrypi4.local
+      port: 502
+    unitId: 100
+    cron: '*/15 * * * * *'
+    metrics:
+    - id: power
+      type: input
+      register: 842
+      format: int16
+      unit: W
+    - id: soc
+      type: input
+      register: 843
+      format: uint16
+      unit: '%'
+
+```
+
+
+
 # DBus Setup
+
+!!! Do not use DBus over TCP (remote). It must be set up on every update. If a remote DBus connection is interrupted, the DBus device o Venus OS remains in it's last state !!!
 
 - Install VenusOS on Raspberry PI
 - [Enable SSH Access](https://www.victronenergy.com/live/ccgx:root_access)

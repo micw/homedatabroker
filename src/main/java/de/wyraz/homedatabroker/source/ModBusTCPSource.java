@@ -46,6 +46,14 @@ public class ModBusTCPSource extends AbstractScheduledSource {
 	}
 	
 	public static enum ModBusRegFormat {
+		int16(2) {
+			@Override
+			public Number decode(byte[] data, int offset) {
+				return
+						(data[offset++] << 8 | 
+						data[offset++] & 0xFF) << 16 >> 16;
+			}
+		},
 		uint16(2) {
 			@Override
 			public Number decode(byte[] data, int offset) {
