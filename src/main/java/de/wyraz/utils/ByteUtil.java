@@ -11,15 +11,19 @@ public class ByteUtil {
 	}
 
 	public static char[] HEX_CHARS="0123456789ABCDEF".toCharArray();
-	
+
 	public static String toHex(byte[] bytes) {
+		return toHex(bytes,0,bytes.length);
+	}
+	
+	public static String toHex(byte[] bytes, int offset, int length) {
 		if (bytes==null) {
 			return null;
 		}
 		StringBuilder sb=new StringBuilder(bytes.length*2);
-		for (int i=0;i<bytes.length;i++) {
-			sb.append(HEX_CHARS[(bytes[i] & 0xF0) >> 4]);
-			sb.append(HEX_CHARS[(bytes[i] & 0x0F)]);
+		for (int i=0;i<length;i++) {
+			sb.append(HEX_CHARS[(bytes[offset+i] & 0xF0) >> 4]);
+			sb.append(HEX_CHARS[(bytes[offset+i] & 0x0F)]);
 		}
 		return sb.toString();
 	}
