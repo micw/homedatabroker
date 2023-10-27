@@ -9,9 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
 
-import de.wyraz.homedatabroker.util.connection.ModBusTCPConnection;
 import de.wyraz.homedatabroker.util.connection.ModBusTCPConnectionManager;
-import de.wyraz.homedatabroker.util.connection.ModBusTCPConnectionParams;
+import de.wyraz.homedatabroker.util.connection.ModBusTCPConnectionManager.ModBusTCPConnection;
+import de.wyraz.homedatabroker.util.connection.ModBusTCPConnectionManager.ModBusTCPConnectionParams;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

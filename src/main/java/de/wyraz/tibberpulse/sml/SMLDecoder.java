@@ -41,13 +41,18 @@ public class SMLDecoder {
 		return decode(smlPayload, true);
 	}
 	
+
 	public static SMLMeterData decode(byte[] smlPayload, boolean failOnCorruptMessagePart) throws IOException {
+		return decode(smlPayload, true, failOnCorruptMessagePart);
+	}
+	
+	public static SMLMeterData decode(byte[] smlPayload, boolean hasSmlFrame, boolean failOnCorruptMessagePart) throws IOException {
 		
 		if (log.isDebugEnabled()) {
 			log.debug("Parsing SML: {}",Hex.encodeHexString(smlPayload));
 		}
 		
-		byte[] messagePayload=extractMessage(smlPayload);
+		byte[] messagePayload= hasSmlFrame?extractMessage(smlPayload):smlPayload;
 		
 		if (DUMP_RAW_SML) {
 			System.err.println(ByteUtil.toHex(messagePayload));

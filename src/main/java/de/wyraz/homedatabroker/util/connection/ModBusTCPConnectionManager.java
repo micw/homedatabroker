@@ -2,11 +2,9 @@ package de.wyraz.homedatabroker.util.connection;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.stereotype.Service;
 
 import com.ghgande.j2mod.modbus.ModbusException;
@@ -15,26 +13,46 @@ import com.ghgande.j2mod.modbus.msg.ModbusRequest;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
+import de.wyraz.homedatabroker.util.connection.AbstractConnectionManager.IConnection;
+import de.wyraz.homedatabroker.util.connection.ModBusTCPConnectionManager.ModBusTCPConnection;
+import de.wyraz.homedatabroker.util.connection.ModBusTCPConnectionManager.ModBusTCPConnectionParams;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
 @Service
-public class ModBusTCPConnectionManager {
+public class ModBusTCPConnectionManager extends AbstractConnectionManager<ModBusTCPConnection, ModBusTCPConnectionParams> {
 	
-	protected Logger log = LoggerFactory.getLogger(getClass());
-	
-	protected static Map<ModBusTCPConnectionParams, ModBusTCPConnection> CONNECTIONS=new HashMap<>();
-	
-	public ModBusTCPConnection getConnection(ModBusTCPConnectionParams params) {
-		synchronized(CONNECTIONS) {
-			return CONNECTIONS.computeIfAbsent(params, this::createNewConnection);
-		}
-	}
-	
+	@Override
 	protected ModBusTCPConnection createNewConnection(ModBusTCPConnectionParams params) {
-		ModBusTCPConnectionImpl connection=new ModBusTCPConnectionImpl(params);
-		connection.checkConnection();
-		return connection;
+		return new ModBusTCPConnection(params);
 	}
 	
-	protected class ModBusTCPConnectionImpl implements ModBusTCPConnection {
+	public static class ModBusTCPConnectionParams {
+		
+		@NotEmpty
+		protected String host;
+		
+		@NotNull
+		protected Integer port=509;
+		
+		@Override
+		public int hashCode() {
+			return HashCodeBuilder.reflectionHashCode(this);
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			return EqualsBuilder.reflectionEquals(this, obj);
+		}
+		
+		@Override
+		public String toString() {
+			return "ModBusTCP@"+host+":"+port;
+		}
+
+	}
+	
+	public class ModBusTCPConnection implements IConnection {
 		
 		protected final ModBusTCPConnectionParams params;
 
@@ -44,7 +62,7 @@ public class ModBusTCPConnectionManager {
 		protected transient int transactionId=1;
 		protected transient int errorCounter=0;
 		
-		protected ModBusTCPConnectionImpl(ModBusTCPConnectionParams params) {
+		protected ModBusTCPConnection(ModBusTCPConnectionParams params) {
 			this.params=params;
 		}
 		

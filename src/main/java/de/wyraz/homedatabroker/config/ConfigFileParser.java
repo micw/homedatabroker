@@ -36,9 +36,11 @@ import de.wyraz.homedatabroker.output.ConsoleOutput;
 import de.wyraz.homedatabroker.output.MQTTOutput;
 import de.wyraz.homedatabroker.output.OpenMetricsPushOutput;
 import de.wyraz.homedatabroker.output.VictronDbusGridMeterOutput;
+import de.wyraz.homedatabroker.output.VictronMQTTGridMeterOutput;
 import de.wyraz.homedatabroker.source.DummySource;
 import de.wyraz.homedatabroker.source.MQTTSource;
 import de.wyraz.homedatabroker.source.ModBusTCPSource;
+import de.wyraz.homedatabroker.source.SerialSMLSource;
 import de.wyraz.homedatabroker.source.TibberPulseHttpSource;
 import de.wyraz.homedatabroker.source.VictronDBusSource;
 import jakarta.validation.ConstraintViolation;
@@ -61,6 +63,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 		SOURCE_TYPES.put("modbus-tcp", () -> new ModBusTCPSource());
 		SOURCE_TYPES.put("tibber-pulse-http", () -> new TibberPulseHttpSource());
 		SOURCE_TYPES.put("victron-dbus", () -> new VictronDBusSource());
+		SOURCE_TYPES.put("sml-serial", () -> new SerialSMLSource());
 	}
 
 	protected static Map<String, Supplier<AbstractComponent>> OUTPUT_TYPES = new HashMap<>();
@@ -69,6 +72,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 		OUTPUT_TYPES.put("mqtt", () -> new MQTTOutput());
 		OUTPUT_TYPES.put("openmetrics", () -> new OpenMetricsPushOutput());
 		OUTPUT_TYPES.put("victron-dbus-gridmeter", () -> new VictronDbusGridMeterOutput());
+		OUTPUT_TYPES.put("victron-mqtt-gridmeter", () -> new VictronMQTTGridMeterOutput());
 	}
 
 	public static String getNodeType(Node node) {
@@ -264,8 +268,8 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 				return bean;
 			});
 		} else {
-			throw new ConfigurationException(node, "Unknown source type: %s. Known types are: %s", type,
-					Strings.join(SOURCE_TYPES.keySet(), ','));
+			throw new ConfigurationException(node, "Unknown %s type: %s. Known types are: %s", idPrefix, type,
+					Strings.join(typeMap.keySet(), ','));
 		}
 
 	}
