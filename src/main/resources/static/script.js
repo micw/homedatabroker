@@ -1,7 +1,26 @@
 function loadData() {
 	fetch('/rest/metrics/sources')
 		.then((res) => res.json())
+		.then((res) => sort(res))
 		.then((res) => renderData(res));
+}
+
+function sort(res) {
+	return res.sort((a,b) => {
+		if (b.sourceId<a.sourceId) {
+			return 1;
+		}
+		if (b.sourceId>a.sourceId) {
+			return -1;
+		}
+		if (b.metricId<a.metricId) {
+			return 1;
+		}
+		if (b.metricId>a.metricId) {
+			return -1;
+		}
+		return 0;
+	});
 }
 
 function renderData(res) {
