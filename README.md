@@ -49,6 +49,14 @@ This output can be used to feed grid meter data into Victron Venus OS device. My
 Aggregations will allow to reduce the amount of data. For example a "average" aggregation with a fixed window size of 5 minutes will collect all values for a metric for 5 minutes and will emit the average after that time.
 
 
-## Web UI (planned)
+## Web UI
 
-My idea is to expose the status of each source and output as well as all received metrics via WebUI that allows easily to check the current status. Another option would be to add a prometheus endpoint that allows monitoring of HomeDataBroker status.
+Metrics from all sources are exposed via HTTP on port 8080. To disable the webserver, set `spring.main.web-application-type=NONE` in application.yaml or via environment variable.
+
+The following endpoints are available:
+
+* `/healthcheck` - A simple endpoint that just returns 'OK' when the application runs
+* `/rest/metrics/sources` - All metrics as REST endpoint (JSON)
+* `/metrics/sources` - All metrics as OpenMetrics endpoint to be scraped by Prometheus
+
+If anyone would like to add a nice website to display the metrics from `/rest/metrics/sources`, please let me know ;-)
