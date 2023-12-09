@@ -69,7 +69,7 @@ public class VictronDBusSource extends AbstractScheduledSource {
 			
 			this.dbusCon = newDbusCon;
 			
-			log.info("Connected connect to {}",dbusUrl);
+			log.info("Connected to {}",dbusUrl);
 			
 			hasConnectionError=false;
 			return true;
