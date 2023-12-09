@@ -59,4 +59,4 @@ The following endpoints are available:
 * `/rest/metrics/sources` - All metrics as REST endpoint (JSON)
 * `/metrics/sources` - All metrics as OpenMetrics endpoint to be scraped by Prometheus
 
-If anyone would like to add a nice website to display the metrics from `/rest/metrics/sources`, please let me know ;-)
+A minimal website to display the metrics from `/rest/metrics/sources` is available at `/`.
