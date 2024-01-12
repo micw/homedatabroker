@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.ReflectionUtils;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.composer.Composer;
@@ -48,13 +48,13 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
-public class ConfigFileParser implements ApplicationContextInitializer<GenericApplicationContext> {
+public class ConfigFileParser implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	protected File configFile;
 
-	protected GenericApplicationContext ctx;
+	protected ConfigurableApplicationContext ctx;
 
 	protected static Map<String, Supplier<AbstractComponent>> SOURCE_TYPES = new HashMap<>();
 	static {
@@ -204,7 +204,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 	}
 	
 	@Override
-	public void initialize(GenericApplicationContext ctx) {
+	public void initialize(ConfigurableApplicationContext ctx) {
 		this.ctx = ctx;
 		this.configFile=new File(ctx.getEnvironment().getProperty("configFile", "config.yaml"));
 		try {
@@ -228,19 +228,19 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 		}
 	}
 
-	protected void initializeSources(GenericApplicationContext ctx, Node node) throws ConfigurationException {
+	protected void initializeSources(ConfigurableApplicationContext ctx, Node node) throws ConfigurationException {
 		for (Node n : expectSequence(node).getValue()) {
 			initializeBean(ctx, n, "source", SOURCE_TYPES);
 		}
 	}
 
-	protected void initializeOutputs(GenericApplicationContext ctx, Node node) throws ConfigurationException {
+	protected void initializeOutputs(ConfigurableApplicationContext ctx, Node node) throws ConfigurationException {
 		for (Node n : expectSequence(node).getValue()) {
 			initializeBean(ctx, n, "output", OUTPUT_TYPES);
 		}
 	}
 
-	protected void initializeBean(GenericApplicationContext ctx, Node node, String idPrefix,
+	protected void initializeBean(ConfigurableApplicationContext ctx, Node node, String idPrefix,
 			Map<String, Supplier<AbstractComponent>> typeMap) throws ConfigurationException {
 
 		MappingNode config = expectMap(node);
@@ -274,7 +274,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<GenericAp
 
 	}
 
-	protected void registerBean(GenericApplicationContext ctx, String name, Supplier<Object> supplier) {
+	protected void registerBean(ConfigurableApplicationContext ctx, String name, Supplier<Object> supplier) {
 		DefaultListableBeanFactory bf = (DefaultListableBeanFactory) ctx.getBeanFactory();
 
 		bf.registerBeanDefinition(name,
