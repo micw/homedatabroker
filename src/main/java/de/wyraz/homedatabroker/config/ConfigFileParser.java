@@ -39,10 +39,11 @@ import de.wyraz.homedatabroker.output.VictronDbusGridMeterOutput;
 import de.wyraz.homedatabroker.output.VictronMQTTGridMeterOutput;
 import de.wyraz.homedatabroker.source.DummySource;
 import de.wyraz.homedatabroker.source.MQTTSource;
-import de.wyraz.homedatabroker.source.ModBusTCPSource;
+import de.wyraz.homedatabroker.source.ModBusIPSource;
 import de.wyraz.homedatabroker.source.SerialSMLSource;
 import de.wyraz.homedatabroker.source.TibberPulseHttpSource;
 import de.wyraz.homedatabroker.source.VictronDBusSource;
+import de.wyraz.homedatabroker.util.connection.ModBusIPConnectionManager.IpProtocol;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -60,7 +61,8 @@ public class ConfigFileParser implements ApplicationContextInitializer<Configura
 	static {
 		SOURCE_TYPES.put("dummy", () -> new DummySource());
 		SOURCE_TYPES.put("mqtt", () -> new MQTTSource());
-		SOURCE_TYPES.put("modbus-tcp", () -> new ModBusTCPSource());
+		SOURCE_TYPES.put("modbus-tcp", () -> new ModBusIPSource(IpProtocol.TCP));
+		SOURCE_TYPES.put("modbus-udp", () -> new ModBusIPSource(IpProtocol.UDP));
 		SOURCE_TYPES.put("tibber-pulse-http", () -> new TibberPulseHttpSource());
 		SOURCE_TYPES.put("victron-dbus", () -> new VictronDBusSource());
 		SOURCE_TYPES.put("sml-serial", () -> new SerialSMLSource());
@@ -297,9 +299,10 @@ public class ConfigFileParser implements ApplicationContextInitializer<Configura
 			}
 
 			Node valueNode = t.getValueNode();
-			Object value = createObject(valueNode, field.getType(), field.getGenericType());
-
 			ReflectionUtils.makeAccessible(field);
+			Object existingValue = ReflectionUtils.getField(field, target);
+			Object value = createObject(valueNode, field.getType(), field.getGenericType(), existingValue);
+
 			ReflectionUtils.setField(field, target, value);
 
 		}
@@ -318,7 +321,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<Configura
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected Object createObject(Node node, Class<?> type, Type generic) throws ConfigurationException {
+	protected Object createObject(Node node, Class<?> type, Type generic, Object existingValue) throws ConfigurationException {
 
 		if (type == String.class) {
 			return expectScalar(node).getValue();
@@ -351,7 +354,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<Configura
 			Class<?> elementClass = (Class) ((ParameterizedType) generic).getActualTypeArguments()[0];
 			List<Object> result = new ArrayList<>();
 			for (Node n : expectSequence(node).getValue()) {
-				Object el = createObject(n, elementClass, elementClass);
+				Object el = createObject(n, elementClass, elementClass, null);
 				result.add(el);
 			}
 
@@ -373,10 +376,14 @@ public class ConfigFileParser implements ApplicationContextInitializer<Configura
 		// Arbitrary (potentially nested) Object
 		{
 			Object el;
-			try {
-				el = type.getConstructor().newInstance();
-			} catch (ReflectiveOperationException ex) {
-				throw new ConfigurationException(node, "Unexpected error", ex);
+			if (existingValue==null) {
+				try {
+					el = type.getConstructor().newInstance();
+				} catch (ReflectiveOperationException ex) {
+					throw new ConfigurationException(node, "Unexpected error", ex);
+				}
+			} else {
+				el = existingValue;
 			}
 			configureObject(el, expectMap(node), false);
 			return el;

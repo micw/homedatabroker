@@ -9,9 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
 
-import de.wyraz.homedatabroker.util.connection.ModBusTCPConnectionManager;
-import de.wyraz.homedatabroker.util.connection.ModBusTCPConnectionManager.ModBusTCPConnection;
-import de.wyraz.homedatabroker.util.connection.ModBusTCPConnectionManager.ModBusTCPConnectionParams;
+import de.wyraz.homedatabroker.util.connection.ModBusIPConnectionManager;
+import de.wyraz.homedatabroker.util.connection.ModBusIPConnectionManager.AbstractModBusIPConnection;
+import de.wyraz.homedatabroker.util.connection.ModBusIPConnectionManager.IpProtocol;
+import de.wyraz.homedatabroker.util.connection.ModBusIPConnectionManager.ModBusIPConnectionParams;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +21,7 @@ import jakarta.validation.constraints.NotNull;
  * https://csimn.com/MHelp-VP3-TM/vp3-tm-appendix-C.html
  * @author mwyraz
  */
-public class ModBusTCPSource extends AbstractScheduledSource {
+public class ModBusIPSource extends AbstractScheduledSource {
 	
 	public static class ModBusMetric {
 		@NotEmpty
@@ -83,18 +84,21 @@ public class ModBusTCPSource extends AbstractScheduledSource {
 	}
 	
 	@Autowired
-	protected ModBusTCPConnectionManager modBusManager;
+	protected ModBusIPConnectionManager modBusManager;
 
-	protected ModBusTCPConnection modBus;
+	protected AbstractModBusIPConnection<?> modBus;
 
-	@NotNull
-	protected ModBusTCPConnectionParams connection;
+	protected final ModBusIPConnectionParams connection;
 	
 	@NotNull
 	protected Integer unitId=0;
 	
 	@NotEmpty
 	protected List<ModBusMetric> metrics;
+	
+	public ModBusIPSource(IpProtocol protocol) {
+		connection = new ModBusIPConnectionParams(protocol);
+	}
 	
 	@PostConstruct
 	protected void init() {
@@ -109,26 +113,28 @@ public class ModBusTCPSource extends AbstractScheduledSource {
 			}
 			
 			for (ModBusMetric metric: metrics) {
-				if (metric.type==ModBusRegType.input) {
-					
-					ReadInputRegistersRequest rreq = new ReadInputRegistersRequest(metric.register,
-							(metric.format.byteCount+1)/2); // Registers are in "words" (2 bytes)
-					
-					rreq.setUnitID(unitId);
-
-					log.debug("Request  {} : {}",metric.id, rreq.getHexMessage());
-					
-					ReadInputRegistersResponse rres = modBus.executeRequest(rreq);
-			
-					log.debug("Response {}: {}",metric.id, rres.getHexMessage());
-					
-					Number result=metric.format.decode(rres.getMessage(),1);
-					
-					if (metric.scale!=null && metric.scale!=0) {
-						result = scaleNumber(result, metric.scale);
+					synchronized(modBus) {
+					if (metric.type==ModBusRegType.input) {
+						
+						ReadInputRegistersRequest rreq = new ReadInputRegistersRequest(metric.register,
+								(metric.format.byteCount+1)/2); // Registers are in "words" (2 bytes)
+						
+						rreq.setUnitID(unitId);
+	
+						log.debug("Request  {} : {}",metric.id, rreq.getHexMessage());
+						
+						ReadInputRegistersResponse rres = modBus.executeRequest(rreq);
+				
+						log.debug("Response {}: {}",metric.id, rres.getHexMessage());
+						
+						Number result=metric.format.decode(rres.getMessage(),1);
+						
+						if (metric.scale!=null && metric.scale!=0) {
+							result = scaleNumber(result, metric.scale);
+						}
+	
+						publishMetric(metric.id, result, metric.unit);
 					}
-
-					publishMetric(metric.id, result, metric.unit);
 				}
 			}
 			
