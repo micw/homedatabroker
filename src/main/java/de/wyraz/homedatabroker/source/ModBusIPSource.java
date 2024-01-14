@@ -145,7 +145,7 @@ public class ModBusIPSource extends AbstractScheduledSource {
 			if (!checkLastException(ex)) {
 				log.warn("Modbus error", ex);
 			} else {
-				log.info("Modbus error: {}", ex);
+				log.info("Modbus error: {}", ex.getMessage());
 			}
 		}
 	}
