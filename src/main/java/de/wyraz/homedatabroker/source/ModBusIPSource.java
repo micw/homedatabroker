@@ -108,12 +108,11 @@ public class ModBusIPSource extends AbstractScheduledSource {
 	protected void schedule() {
 		
 		try {
-			if (!modBus.checkConnection()) {
-				return;
-			}
-			
-			for (ModBusMetric metric: metrics) {
-					synchronized(modBus) {
+			synchronized(modBus) {
+				if (!modBus.checkConnection()) {
+					return;
+				}
+				for (ModBusMetric metric: metrics) {
 					if (metric.type==ModBusRegType.input) {
 						
 						ReadInputRegistersRequest rreq = new ReadInputRegistersRequest(metric.register,
@@ -145,6 +144,8 @@ public class ModBusIPSource extends AbstractScheduledSource {
 		} catch (Exception ex) {
 			if (!checkLastException(ex)) {
 				log.warn("Modbus error", ex);
+			} else {
+				log.info("Modbus error: {}", ex);
 			}
 		}
 	}

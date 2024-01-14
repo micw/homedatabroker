@@ -107,7 +107,7 @@ public class ModBusIPConnectionManager extends AbstractConnectionManager<Abstrac
 		@Override
 		protected ModbusTransaction createTransaction(TCPMasterConnection con) {
 			ModbusTCPTransaction tx=new ModbusTCPTransaction(con);
-			tx.setRetries(0);
+			tx.setRetries(1);
 			tx.setReconnecting(false);
 			return tx;
 		}
@@ -142,7 +142,7 @@ public class ModBusIPConnectionManager extends AbstractConnectionManager<Abstrac
 		@Override
 		protected ModbusTransaction createTransaction(UDPMasterConnection con) {
 			ModbusUDPTransaction tx=new ModbusUDPTransaction(con);
-			tx.setRetries(0);
+			tx.setRetries(1);
 			return tx;
 		}
 		
