@@ -45,7 +45,7 @@ jobs:
       - name: Build with Maven
         run: mvn -Duser.timezone=Europe/Berlin --batch-mode --update-snapshots package
         
-      - name: Build and push Docker image
+      - name: Build and push Docker image for arm64
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           file: Dockerfile
@@ -53,3 +53,14 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/arm64
+
+      - name: Build and push Docker image for amd64
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          file: Dockerfile
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
