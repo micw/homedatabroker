@@ -327,7 +327,12 @@ public class ConfigFileParser implements ApplicationContextInitializer<Configura
 			return expectScalar(node).getValue();
 		}
 		if (type == Integer.class) {
-			return Integer.parseInt(expectScalar(node).getValue());
+			String value=expectScalar(node).getValue();
+			if (value.startsWith("0x")) {
+				return Integer.parseInt(value.substring(2),16);
+			} else {
+				return Integer.parseInt(value);
+			}
 		}
 		if (type == Boolean.class || type==Boolean.TYPE) {
 			return Boolean.parseBoolean(expectScalar(node).getValue());
