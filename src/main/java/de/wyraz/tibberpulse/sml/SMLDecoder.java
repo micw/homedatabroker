@@ -146,7 +146,13 @@ public class SMLDecoder {
 			if ("1-0:96.90.2*1".equals(obisCode)) { // firmware checksum
 				return;
 			}
+			if ("1-0:96.90.2*2".equals(obisCode)) { // firmware checksum
+				return;
+			}			
 			if ("1-0:0.2.0*0".equals(obisCode)) { // firmware version
+				return;
+			}
+			if ("1-0:0.2.0*1".equals(obisCode)) { // firmware version
 				return;
 			}
 			if ("1-0:97.97.0*0".equals(obisCode)) { // status register
