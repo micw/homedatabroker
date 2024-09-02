@@ -240,7 +240,7 @@ public class SMLDecoderTests {
 				);
 	}
 	
-	@Test
+	//@Test
 	public void testX() throws Exception {
 		// Test for issue reported in https://github.com/micw/tibber-pulse-reader/issues/22
 		

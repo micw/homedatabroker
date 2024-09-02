@@ -46,6 +46,11 @@ public class SMLDecoder {
 		return decode(smlPayload, true, failOnCorruptMessagePart);
 	}
 	
+	private static Double lastEnergyTotal;
+	private static long lastEnergyTotalTs;
+	private static Double lastEnergyValues[]=new Double[5];
+	private static int lastEnergyValuePos=0;
+	
 	public static SMLMeterData decode(byte[] smlPayload, boolean hasSmlFrame, boolean failOnCorruptMessagePart) throws IOException {
 		
 		if (log.isDebugEnabled()) {
@@ -68,6 +73,50 @@ public class SMLDecoder {
 		for (SMLMessage sml: SMLMessageParser.parse(messagePayload)) {
 			decodeSMLObject(result, sml.getMessageBody());
 		}
+		
+		if ("1EFR3575201887".equals(result.meterId)) {
+			double energyTotal=0d;
+			for (Reading reading: result.readings) {
+				if (reading.getName().equals("energyImportTotal")) {
+					energyTotal+=reading.getValue().doubleValue();
+				} else if (reading.getName().equals("energyExportTotal")) {
+					energyTotal-=reading.getValue().doubleValue();
+				}
+			}
+			if (lastEnergyTotal!=null) {
+				double delta=energyTotal-lastEnergyTotal;
+				
+				int deltaMs=(int)(System.currentTimeMillis()-lastEnergyTotalTs);
+				double deltaWatt=delta*1000d*3600d/deltaMs;
+
+//				System.err.println(delta+" "+deltaMs);
+				
+				lastEnergyValues[lastEnergyValuePos] = deltaWatt;
+				lastEnergyValuePos++;
+				if (lastEnergyValuePos==lastEnergyValues.length) {
+					lastEnergyValuePos=0;
+				}
+				int count=0;
+				double sum=0;
+				for (int i=0;i<lastEnergyValues.length;i++) {
+//					System.err.println(i+" "+lastEnergyValues[i]);
+					if (lastEnergyValues[i]!=null) {
+						count++;
+						sum+=lastEnergyValues[i];
+					}
+				}
+				double deltaAvg=Math.round(sum/count*1000d)/1000d;
+//				System.err.println(deltaAvg);
+				
+				result.readings.add(new Reading("1-0:16.7.0*255", "powerTotal",deltaAvg,"Watt"));
+				result.readings.add(new Reading("1-0:16.7.0*255", "powerL1",deltaAvg/3,"Watt"));
+				result.readings.add(new Reading("1-0:16.7.0*255", "powerL2",deltaAvg/3,"Watt"));
+				result.readings.add(new Reading("1-0:16.7.0*255", "powerL3",deltaAvg/3,"Watt"));
+			}
+			lastEnergyTotal=energyTotal;
+			lastEnergyTotalTs=System.currentTimeMillis();
+		}
+		
 		
 		return result;
 	}
