@@ -55,6 +55,16 @@ public class ModBusIPSource extends AbstractScheduledSource {
 						data[offset++] & 0xFF) << 16 >> 16;
 			}
 		},
+		int32(4) {
+			@Override
+			public Number decode(byte[] data, int offset) {
+				return
+						(data[offset++] & 0xFF) << 24 | 
+						(data[offset++] & 0xFF) << 16 | 
+						(data[offset++] & 0xFF) << 8 | 
+						data[offset++] & 0xFF;
+			}
+		},
 		uint16(2) {
 			@Override
 			public Number decode(byte[] data, int offset) {
