@@ -37,6 +37,7 @@ import de.wyraz.homedatabroker.output.MQTTOutput;
 import de.wyraz.homedatabroker.output.OpenMetricsPushOutput;
 import de.wyraz.homedatabroker.output.VictronDbusGridMeterOutput;
 import de.wyraz.homedatabroker.output.VictronMQTTGridMeterOutput;
+import de.wyraz.homedatabroker.source.AggregationSource;
 import de.wyraz.homedatabroker.source.DummySource;
 import de.wyraz.homedatabroker.source.MQTTSource;
 import de.wyraz.homedatabroker.source.ModBusIPSource;
@@ -66,6 +67,7 @@ public class ConfigFileParser implements ApplicationContextInitializer<Configura
 		SOURCE_TYPES.put("tibber-pulse-http", () -> new TibberPulseHttpSource());
 		SOURCE_TYPES.put("victron-dbus", () -> new VictronDBusSource());
 		SOURCE_TYPES.put("sml-serial", () -> new SerialSMLSource());
+		SOURCE_TYPES.put("aggregation", () -> new AggregationSource());
 	}
 
 	protected static Map<String, Supplier<AbstractComponent>> OUTPUT_TYPES = new HashMap<>();

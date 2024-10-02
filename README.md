@@ -22,6 +22,21 @@ Then it's finished, I can replace https://github.com/micw/mqtt2openmetrics with 
 
 This source allows to read SML directly from a Tibber Pulse device. It allows to replace https://github.com/micw/tibber-pulse-reader with HomeDataBroker.
 
+## Aggregation
+
+The aggregation source can run calculations on other sources. It has two modes of operation:
+
+### externally triggered aggregations
+
+In this mode, each new input value results in a new output value. Optionally the output can be delayed, so that several inputs that updates the values within a timeframe are aggregates into one output.
+
+TODO: this is not implemented yet!
+
+### cron triggered aggregations
+
+In this mode, all input values are collected. Every defined interval, the aggregation is evaluated and a new output value is published.
+
+
 ## Outputs
 
 ### OpenMetrics Http Output
@@ -43,10 +58,6 @@ This output will be able publish metrics via MQTT. MQTT works. Need to implement
 ### Victron Output
 
 This output can be used to feed grid meter data into Victron Venus OS device. My personal use case is to provide grid data to my Victron Multiplus II battery inverter.
-
-## Aggregations (planned)
-
-Aggregations will allow to reduce the amount of data. For example a "average" aggregation with a fixed window size of 5 minutes will collect all values for a metric for 5 minutes and will emit the average after that time.
 
 
 ## Web UI
