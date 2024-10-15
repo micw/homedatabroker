@@ -26,9 +26,13 @@ public abstract class AbstractComponent {
 		log = LoggerFactory.getLogger(getClass().getName()+"."+id);
 	}
 	
+	protected String getCanonicalExceptionMessage(Exception exception) {
+		return exception.getMessage();
+	}
+	
 	protected boolean checkLastException(Exception newException) {
 		if (lastException==null || lastException.getClass()!=newException.getClass() ||
-				!lastException.getMessage().equals(newException.getMessage())) {
+				!getCanonicalExceptionMessage(lastException).equals(getCanonicalExceptionMessage(newException))) {
 			lastException=newException;
 			return false;
 		}

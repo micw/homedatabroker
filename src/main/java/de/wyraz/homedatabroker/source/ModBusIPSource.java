@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.ghgande.j2mod.modbus.ModbusIOException;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
 
@@ -160,6 +161,14 @@ public class ModBusIPSource extends AbstractScheduledSource {
 		}
 	}
 	
+	protected String getCanonicalExceptionMessage(Exception exception) {
+		if (exception instanceof ModbusIOException) {
+			String message=exception.getMessage();
+			message=message.replaceAll("^Executing transaction .*? failed \\(tried \\d+ times\\) ","");
+			return message;
+		}
+		return super.getCanonicalExceptionMessage(exception);
+	}
 
 	// FIXME: copied from my SML decode - de-dupplicate later
 	public Number scaleNumber(Number value, Number scaler) {
