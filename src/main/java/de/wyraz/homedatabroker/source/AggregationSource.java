@@ -1,7 +1,7 @@
 package de.wyraz.homedatabroker.source;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,12 +53,11 @@ public class AggregationSource extends AbstractSource {
 				if (lastValue==null || lastValueTs==null) {
 					return null;
 				}
-				if (expireTs!=null && expireTs.isBefore(lastValueTs)) {
+				if (expireTs!=null && expireTs.isAfter(lastValueTs)) {
 					return null;
 				}
-			return lastValue;
+				return lastValue;
 			}
-			
 		}
 
 	}
@@ -68,6 +67,8 @@ public class AggregationSource extends AbstractSource {
 		protected String id;
 		
 		protected String unit;
+		
+		protected Duration expireInputsAfter; 
 		
 		@NotEmpty
 		protected List<String> inputMetrics;
@@ -95,7 +96,8 @@ public class AggregationSource extends AbstractSource {
 			return _inputMetrics;
 		}
 		
-		public void publish(AggregationSource publisher, ZonedDateTime expireTs) {
+		public void publish(AggregationSource publisher, ZonedDateTime now) {
+			ZonedDateTime expireTs=expireInputsAfter==null?null:ZonedDateTime.now().minus(expireInputsAfter);
 			Number value=aggregation.apply(_inputMetrics, expireTs);
 			publisher.publishMetric(id, value, unit);
 		}
@@ -106,8 +108,6 @@ public class AggregationSource extends AbstractSource {
 	
 	@NotEmpty
 	protected String cron;
-	
-	protected Long expireInputsAfterMs; 
 
 	@Autowired
 	protected TaskScheduler scheduler;
@@ -126,9 +126,8 @@ public class AggregationSource extends AbstractSource {
 	}
 	
 	protected void schedule() {
-		ZonedDateTime expireTs=(expireInputsAfterMs==null?null:ZonedDateTime.now().minus(expireInputsAfterMs,ChronoUnit.MILLIS));
 		for (AggregatedMetric metric: metrics) {
-			metric.publish(this, expireTs);
+			metric.publish(this, ZonedDateTime.now());
 		}
 	}
 	

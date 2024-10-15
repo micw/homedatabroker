@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.time.DateTimeException;
+import java.time.Duration;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -18,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.boot.convert.DurationStyle;
+import org.springframework.boot.convert.PeriodFormat;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.ReflectionUtils;
@@ -379,6 +384,15 @@ public class ConfigFileParser implements ApplicationContextInitializer<Configura
 
 			return result;
 		}
+		
+		if (type.isAssignableFrom(Duration.class)) {
+			try {
+				return DurationStyle.detectAndParse(expectScalar(node).getValue());
+			} catch (IllegalArgumentException ex) {
+				throw new ConfigurationException(node, ex.getMessage());
+			}
+		}
+		
 		
 		// Arbitrary (potentially nested) Object
 		{
