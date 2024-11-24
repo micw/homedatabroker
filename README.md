@@ -4,6 +4,8 @@ This is a middleware that will be able to read metrics from various sources, tra
 
 This project is in an early stage. My plan is to consolidate several of my similar projects into this one.
 
+See [Examples.md](Examples.md) for configuration examples.
+
 ## Sources
 
 ### ModBus-TCP
