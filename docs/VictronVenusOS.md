@@ -31,7 +31,9 @@ sources:
 
 # DBus Setup
 
-!!! Do not use DBus over TCP (remote). It must be set up on every update. If a remote DBus connection is interrupted, the DBus device o Venus OS remains in it's last state !!!
+!!! Do not use DBus over TCP (remote). It must be re-configured up on every update of VenusOS. !!!
+
+!!! If a remote DBus connection is interrupted, the DBus device or Venus OS remains in it's last state and must be re-started !!!
 
 - Install VenusOS on Raspberry PI
 - [Enable SSH Access](https://www.victronenergy.com/live/ccgx:root_access)
