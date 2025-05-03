@@ -14,11 +14,16 @@ This source can read ModBus registers via TCP (Modbus RTU over TCP). I use it al
 
 No documentation available yet, see config.example.yaml for an example that works for my PV inverter.
 
-### MQTT Source (planned)
+### MQTT Source
 
-This source will be able to read arbitrary metrics from MQTT topics. I also plan to integrate my SML parser from https://github.com/micw/tibber-pulse-reader so that SML encoded meter data can directly converted into metrics.
+This source is able to read arbitrary metrics from MQTT topics. Payload extraction is implemented for a few formats:
 
-Then it's finished, I can replace https://github.com/micw/mqtt2openmetrics with HomeDataBroker.
+* RAW (each topic contains a number)
+* SML (each topic contains a binary SML encoded message
+* SML_HEX (like SML but the message is hex encoded)
+* JSON
+
+By using "MQTT Source" along with "OpenMetrics Http Output" you can now replace https://github.com/micw/mqtt2openmetrics with HomeDataBroker.
 
 ### Tibber Pulse HTTP
 

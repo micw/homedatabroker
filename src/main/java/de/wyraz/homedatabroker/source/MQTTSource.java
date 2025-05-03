@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +28,7 @@ import com.hivemq.client.mqtt.mqtt3.Mqtt3Client;
 import com.hivemq.client.mqtt.mqtt3.Mqtt3ClientBuilder;
 import com.hivemq.client.mqtt.mqtt3.message.subscribe.Mqtt3Subscription;
 
+import de.wyraz.homedatabroker.util.JSONHelper;
 import de.wyraz.tibberpulse.sml.SMLDecoder;
 import de.wyraz.tibberpulse.sml.SMLMeterData;
 import jakarta.annotation.PostConstruct;
@@ -84,6 +86,30 @@ public class MQTTSource extends AbstractSource {
 					return Collections.emptyList();
 				}
 				return SML.extract(payload);
+			}
+		},
+		JSON {
+			@Override
+			List<Map<String, String>> extract(byte[] payload) {
+				try {
+					List<Map<String, String>> result=new ArrayList<>();
+					for (Entry<String,String> e: JSONHelper.parseAndFlattenJSON(payload).entrySet()) {
+						try {
+							// Only pass down numeric values
+							Double.parseDouble(e.getValue());
+						} catch (NumberFormatException ex) {
+							continue;
+						}
+						Map<String, String> entry=new HashMap<>();
+						entry.put("JSON:KEY", e.getKey());
+						entry.put("VALUE", e.getValue());
+						result.add(entry);
+					}
+					return result;
+				} catch (Exception ex) {
+					log.warn("Unable to decode as JSON: {}",new String(payload,StandardCharsets.UTF_8),ex);
+					return Collections.emptyList();
+				}
 			}
 		}
 		
