@@ -1,4 +1,4 @@
-FROM openjdk:17-alpine
+FROM eclipse-temurin:17-jre
 
 ADD target/homedatabroker-1.0.0-SNAPSHOT.jar /app/homedatabroker.jar
 
