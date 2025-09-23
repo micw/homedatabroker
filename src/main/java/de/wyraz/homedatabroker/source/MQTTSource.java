@@ -297,6 +297,12 @@ public class MQTTSource extends AbstractSource {
 	protected Number parseNumber(String value) {
 		if (value==null) return null;
 		try {
+			if (value.equalsIgnoreCase("true")) {
+				return 1;
+			}
+			if (value.equalsIgnoreCase("false")) {
+				return 0;
+			}
 			if (value.contains(".")) {
 				return Double.parseDouble(value);
 			} else {
