@@ -40,7 +40,7 @@ public class AggregationSource extends AbstractSource {
 			return lastValueTs;
 		}
 		
-		protected void update(Number lastValue, ZonedDateTime lastValueTs) {
+		public void update(Number lastValue, ZonedDateTime lastValueTs) {
 			synchronized(this) {
 				this.lastValue = lastValue;
 				this.lastValueTs = lastValueTs;
@@ -76,6 +76,8 @@ public class AggregationSource extends AbstractSource {
 		@NotNull
 		protected AggregationType aggregation;
 		
+		protected Boolean requireAllInputs = false;
+		
 		protected transient List<AggregatedMetricInput> _inputMetrics;
 		
 		@Override
@@ -98,7 +100,7 @@ public class AggregationSource extends AbstractSource {
 		
 		public void publish(AggregationSource publisher, ZonedDateTime now) {
 			ZonedDateTime expireTs=expireInputsAfter==null?null:ZonedDateTime.now().minus(expireInputsAfter);
-			Number value=aggregation.apply(_inputMetrics, expireTs);
+			Number value=aggregation.apply(_inputMetrics, expireTs, requireAllInputs);
 			publisher.publishMetric(id, value, unit);
 		}
 	}
